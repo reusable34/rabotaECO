@@ -50,12 +50,16 @@ fi
 
 # 4. Установка Docker Compose
 echo -e "${YELLOW}[2/6] Установка Docker Compose...${NC}"
-if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+if ! docker compose version &>/dev/null && ! command -v docker-compose &>/dev/null; then
     apt-get update -qq
     apt-get install -y docker-compose-plugin 2>/dev/null || apt-get install -y docker-compose
     echo -e "${GREEN}✓ Docker Compose установлен${NC}"
 else
-    echo -e "${GREEN}✓ Docker Compose установлен${NC}"
+    if docker compose version &>/dev/null; then
+        echo -e "${GREEN}✓ Docker Compose (плагин): $(docker compose version)${NC}"
+    else
+        echo -e "${GREEN}✓ Docker Compose: $(docker-compose --version)${NC}"
+    fi
 fi
 
 # 5. Клонирование/обновление проекта
@@ -90,29 +94,39 @@ NEXT_PUBLIC_API_URL=http://${IP}:8080
 NEXT_PUBLIC_ENV=production
 EOF
 
-# 7. Выбор конфигурации
+# 7. Определение команды docker compose
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE="docker compose"
+elif command -v docker-compose &>/dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+else
+    echo -e "${RED}Ошибка: Docker Compose не найден${NC}"
+    exit 1
+fi
+
+# 8. Выбор конфигурации
 COMPOSE_FILE="docker-compose.yml"
 if [ -f "docker-compose.production.yml" ]; then
     COMPOSE_FILE="docker-compose.production.yml"
 fi
 
-# 8. Запуск
+# 9. Запуск
 echo -e "${YELLOW}[5/6] Запуск контейнеров...${NC}"
-docker-compose -f "$COMPOSE_FILE" down 2>/dev/null || true
-docker-compose -f "$COMPOSE_FILE" up -d --build
+$DOCKER_COMPOSE -f "$COMPOSE_FILE" down 2>/dev/null || true
+$DOCKER_COMPOSE -f "$COMPOSE_FILE" up -d --build
 
-# 9. Ожидание
+# 10. Ожидание
 echo -e "${YELLOW}[6/6] Ожидание запуска (60 сек)...${NC}"
 sleep 60
 
-# 10. Миграции
+# 11. Миграции
 echo "Выполнение миграций..."
 for i in {1..30}; do
-    docker-compose -f "$COMPOSE_FILE" exec -T db pg_isready -U eco_admin &>/dev/null 2>&1 && break || sleep 2
+    $DOCKER_COMPOSE -f "$COMPOSE_FILE" exec -T db pg_isready -U eco_admin &>/dev/null 2>&1 && break || sleep 2
 done
 
-docker-compose -f "$COMPOSE_FILE" exec -T backend php yii migrate --interactive=0 2>/dev/null || true
-docker-compose -f "$COMPOSE_FILE" exec -T backend php yii seed 2>/dev/null || true
+$DOCKER_COMPOSE -f "$COMPOSE_FILE" exec -T backend php yii migrate --interactive=0 2>/dev/null || true
+$DOCKER_COMPOSE -f "$COMPOSE_FILE" exec -T backend php yii seed 2>/dev/null || true
 
 # Итог
 echo ""
