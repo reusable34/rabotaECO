@@ -17,12 +17,12 @@ echo "🌐 НАСТРОЙКА ДОСТУПА В ИНТЕРНЕТ"
 echo "==========================================${NC}"
 echo ""
 
-# 1. Настройка Nginx на порту 80
-echo -e "${YELLOW}[1/3] Настройка Nginx...${NC}"
+# 1. Настройка Nginx на порту 3000 (чтобы не конфликтовать с Nginx Proxy Manager)
+echo -e "${YELLOW}[1/3] Настройка Nginx на порту 3000...${NC}"
 
 cat > /etc/nginx/sites-available/eco-public << NGINX
 server {
-    listen 80;
+    listen 3000;
     server_name _;
 
     # Frontend
@@ -73,9 +73,8 @@ nginx -t
 # 2. Настройка firewall (если установлен)
 echo -e "${YELLOW}[2/3] Настройка firewall...${NC}"
 if command -v ufw &> /dev/null; then
-    ufw allow 80/tcp
-    ufw allow 443/tcp
-    echo "UFW настроен"
+    ufw allow 3000/tcp
+    echo "UFW настроен (порт 3000)"
 elif command -v firewall-cmd &> /dev/null; then
     firewall-cmd --permanent --add-service=http
     firewall-cmd --permanent --add-service=https
@@ -98,12 +97,14 @@ echo "✅ САЙТ ДОСТУПЕН В ИНТЕРНЕТЕ!"
 echo "==========================================${NC}"
 echo ""
 echo -e "${BLUE}🌐 Доступ:${NC}"
-echo "  Локально:  http://${IP}"
-echo "  Интернет:  http://${EXTERNAL_IP}"
+echo "  Локально:  http://${IP}:3000"
+echo "  Интернет:  http://${EXTERNAL_IP}:3000"
 echo ""
 echo -e "${YELLOW}📝 Примечания:${NC}"
 echo "  - Frontend доступен на главной странице"
 echo "  - Backend API доступен по /api/*"
-echo "  - Для HTTPS настройте SSL сертификат (Let's Encrypt)"
+echo "  - Порт 80 занят Nginx Proxy Manager"
+echo "  - Для доступа через порт 80 настройте прокси в Nginx Proxy Manager:"
+echo "    Domain: ваш-домен.com -> Forward: http://127.0.0.1:3000"
 echo ""
 
