@@ -50,7 +50,7 @@ export default function CalendarPage() {
       // Удаляем дубликаты событий по ID и комбинации title+date
       const seenEventIds = new Set<number>();
       const seenEventKeys = new Set<string>();
-      evts = evts.filter(evt => {
+      evts = evts.filter((evt: Event) => {
         // Проверка по ID
         if (seenEventIds.has(evt.id)) return false;
         // Проверка по комбинации title+date
