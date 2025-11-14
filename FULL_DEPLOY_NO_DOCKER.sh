@@ -97,17 +97,35 @@ apt-get install -y nginx
 # 8. Настройка Backend
 echo -e "${YELLOW}[8/10] Настройка Backend...${NC}"
 cd "$BACKEND_DIR"
+echo "Текущая директория: $(pwd)"
+
+# Проверка наличия composer.json
+if [ ! -f "composer.json" ]; then
+    echo -e "${RED}Ошибка: composer.json не найден в $BACKEND_DIR${NC}"
+    echo "Содержимое директории:"
+    ls -la
+    exit 1
+fi
 
 # Установка зависимостей
 if [ ! -d "vendor" ]; then
+    echo "Установка Composer зависимостей (это может занять 5-10 минут)..."
     composer config allow-plugins.fxp/composer-asset-plugin true 2>/dev/null || true
     composer config allow-plugins.yiisoft/yii2-composer true 2>/dev/null || true
-    composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts || \
-    composer install --ignore-platform-reqs --no-scripts || true
+    echo "Запуск composer install..."
+    timeout 600 composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts 2>&1 | tail -20 || \
+    timeout 600 composer install --ignore-platform-reqs --no-scripts 2>&1 | tail -20 || {
+        echo -e "${YELLOW}Предупреждение: composer install завершился с ошибками, продолжаю...${NC}"
+    }
+    echo "Composer установка завершена"
+else
+    echo "Vendor директория уже существует, пропускаю установку"
 fi
 
-# Создание .env если нет
+# Создание конфигурации БД
+echo "Настройка конфигурации базы данных..."
 if [ ! -f "api/config/params-local.php" ]; then
+    mkdir -p api/config
     cat > api/config/params-local.php << 'PHP'
 <?php
 return [
@@ -123,20 +141,52 @@ return [
     ],
 ];
 PHP
+    echo "Конфигурация создана"
+else
+    echo "Конфигурация уже существует"
+fi
+
+# Проверка структуры Yii2
+if [ ! -d "api" ]; then
+    echo -e "${YELLOW}Предупреждение: директория api не найдена, проверяю структуру...${NC}"
+    ls -la
+    # Возможно, структура другая - ищем yii
+    if [ -f "yii" ]; then
+        echo "Найден yii в корне, используем корневую структуру"
+        YII_PATH="."
+    else
+        echo -e "${RED}Ошибка: не могу найти структуру Yii2${NC}"
+        exit 1
+    fi
+else
+    YII_PATH="api"
 fi
 
 # Создание директорий
+echo "Создание директорий для storage..."
 mkdir -p storage/clients
-chown -R www-data:www-data storage
+chown -R www-data:www-data storage 2>/dev/null || chown -R $USER:$USER storage
 chmod -R 777 storage
 
 # Миграции
 echo "Выполнение миграций..."
-php yii migrate --interactive=0 || true
+if [ -f "$YII_PATH/yii" ]; then
+    cd "$YII_PATH"
+    php yii migrate --interactive=0 2>&1 | tail -10 || {
+        echo -e "${YELLOW}Предупреждение: миграции завершились с ошибками${NC}"
+    }
+    cd "$BACKEND_DIR"
+else
+    echo -e "${YELLOW}Предупреждение: yii не найден, пропускаю миграции${NC}"
+fi
 
 # Seed данных
 echo "Загрузка тестовых данных..."
-php yii seed 2>/dev/null || true
+if [ -f "$YII_PATH/yii" ]; then
+    cd "$YII_PATH"
+    php yii seed 2>&1 | tail -5 || echo "Seed не выполнен (возможно, команда не существует)"
+    cd "$BACKEND_DIR"
+fi
 
 # 9. Настройка Frontend
 echo -e "${YELLOW}[9/10] Настройка Frontend...${NC}"
