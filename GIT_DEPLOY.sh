@@ -30,7 +30,14 @@ else
     echo -e "${GREEN}✓ Git: $(git --version)${NC}"
 fi
 
-# 2. Установка Docker
+# 2. Установка curl если нет
+if ! command -v curl &> /dev/null; then
+    echo -e "${YELLOW}Установка curl...${NC}"
+    apt-get update -qq
+    apt-get install -y curl
+fi
+
+# 3. Установка Docker
 echo -e "${YELLOW}[1/6] Установка Docker...${NC}"
 if ! command -v docker &> /dev/null; then
     curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
@@ -41,7 +48,7 @@ else
     echo -e "${GREEN}✓ Docker: $(docker --version)${NC}"
 fi
 
-# 3. Установка Docker Compose
+# 4. Установка Docker Compose
 echo -e "${YELLOW}[2/6] Установка Docker Compose...${NC}"
 if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
     apt-get update -qq
@@ -51,7 +58,7 @@ else
     echo -e "${GREEN}✓ Docker Compose установлен${NC}"
 fi
 
-# 4. Клонирование/обновление проекта
+# 5. Клонирование/обновление проекта
 echo -e "${YELLOW}[3/6] Получение проекта из Git...${NC}"
 mkdir -p "$PROJECT_DIR"
 cd "$PROJECT_DIR"
@@ -75,7 +82,7 @@ else
     exit 1
 fi
 
-# 5. Настройка переменных
+# 6. Настройка переменных
 echo -e "${YELLOW}[4/6] Настройка переменных...${NC}"
 mkdir -p frontend
 cat > frontend/.env.local << EOF
@@ -83,22 +90,22 @@ NEXT_PUBLIC_API_URL=http://${IP}:8080
 NEXT_PUBLIC_ENV=production
 EOF
 
-# 6. Выбор конфигурации
+# 7. Выбор конфигурации
 COMPOSE_FILE="docker-compose.yml"
 if [ -f "docker-compose.production.yml" ]; then
     COMPOSE_FILE="docker-compose.production.yml"
 fi
 
-# 7. Запуск
+# 8. Запуск
 echo -e "${YELLOW}[5/6] Запуск контейнеров...${NC}"
 docker-compose -f "$COMPOSE_FILE" down 2>/dev/null || true
 docker-compose -f "$COMPOSE_FILE" up -d --build
 
-# 8. Ожидание
+# 9. Ожидание
 echo -e "${YELLOW}[6/6] Ожидание запуска (60 сек)...${NC}"
 sleep 60
 
-# 9. Миграции
+# 10. Миграции
 echo "Выполнение миграций..."
 for i in {1..30}; do
     docker-compose -f "$COMPOSE_FILE" exec -T db pg_isready -U eco_admin &>/dev/null 2>&1 && break || sleep 2
