@@ -1,0 +1,6 @@
+# ==========================================
+# ОДНА КОМАНДА НА СЕРВЕР - ВСЁ САМО
+# ==========================================
+
+apt-get update -qq && apt-get install -y git && git clone https://github.com/reusable34/rabotaECO.git /opt/eco-project && cd /opt/eco-project && bash GIT_DEPLOY.sh
+

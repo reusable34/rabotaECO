@@ -115,17 +115,24 @@ echo -e "${YELLOW}Проверка окружения...${NC}"
 # Если в LXC контейнере, настраиваем Docker
 if [ -f /.dockerenv ] || grep -q "container=lxc" /proc/1/environ 2>/dev/null || [ -d /sys/fs/cgroup/systemd ]; then
     echo "Обнаружен LXC контейнер, настраиваю Docker..."
-    # Отключаем проверку sysctl для LXC
+    # Настраиваем Docker для работы в LXC
     mkdir -p /etc/docker
-    cat > /etc/docker/daemon.json << 'DOCKER_EOF'
+    if [ ! -f /etc/docker/daemon.json ]; then
+        cat > /etc/docker/daemon.json << 'DOCKER_EOF'
 {
-  "userland-proxy": false,
-  "iptables": false,
-  "ip-forward": false
+  "storage-driver": "overlay2",
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
 }
 DOCKER_EOF
-    systemctl restart docker 2>/dev/null || service docker restart 2>/dev/null || true
-    sleep 3
+        systemctl restart docker 2>/dev/null || service docker restart 2>/dev/null || true
+        sleep 3
+    fi
+    # Настраиваем sysctl на уровне хоста (если возможно)
+    echo 0 > /proc/sys/net/ipv4/ip_unprivileged_port_start 2>/dev/null || true
 fi
 
 # 10. Запуск
