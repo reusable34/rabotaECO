@@ -1,0 +1,16 @@
+# ==========================================
+# ОДНА КОМАНДА НА СЕРВЕР - ВСЁ САМО
+# ==========================================
+
+# 1. Загрузите eco-project.bundle через Proxmox веб-интерфейс в /opt/
+
+# 2. Выполните на сервере ЭТУ ОДНУ КОМАНДУ:
+
+cd /opt && git clone eco-project.bundle eco-project 2>/dev/null || (rm -rf eco-project && git clone eco-project.bundle eco-project) && cd eco-project && bash GIT_DEPLOY.sh
+
+# ==========================================
+# ИЛИ если bundle уже в /opt/eco-project/:
+
+cd /opt/eco-project && bash GIT_DEPLOY.sh
+
+# ==========================================
