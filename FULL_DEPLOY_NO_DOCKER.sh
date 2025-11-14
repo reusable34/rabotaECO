@@ -109,14 +109,34 @@ fi
 
 # Установка зависимостей
 if [ ! -d "vendor" ]; then
-    echo "Установка Composer зависимостей (это может занять 5-10 минут)..."
+    echo "Установка Composer зависимостей (ускоренная версия)..."
     composer config allow-plugins.fxp/composer-asset-plugin true 2>/dev/null || true
     composer config allow-plugins.yiisoft/yii2-composer true 2>/dev/null || true
-    echo "Запуск composer install..."
-    timeout 600 composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts 2>&1 | tail -20 || \
-    timeout 600 composer install --ignore-platform-reqs --no-scripts 2>&1 | tail -20 || {
-        echo -e "${YELLOW}Предупреждение: composer install завершился с ошибками, продолжаю...${NC}"
-    }
+    composer config process-timeout 300 2>/dev/null || true
+    composer config --global cache-dir /tmp/composer-cache 2>/dev/null || true
+    
+    # Быстрая установка с минимальными проверками
+    echo "Запуск composer install (параллельно, без dev зависимостей)..."
+    COMPOSER_MEMORY_LIMIT=-1 composer install \
+        --no-dev \
+        --optimize-autoloader \
+        --ignore-platform-reqs \
+        --no-scripts \
+        --prefer-dist \
+        --no-interaction \
+        --quiet 2>&1 | grep -E "(Loading|Installing|Updating|Writing|Generating)" || true
+    
+    # Если не сработало, пробуем с dev зависимостями но быстро
+    if [ ! -d "vendor" ]; then
+        echo "Повторная попытка с dev зависимостями..."
+        COMPOSER_MEMORY_LIMIT=-1 composer install \
+            --ignore-platform-reqs \
+            --no-scripts \
+            --prefer-dist \
+            --no-interaction \
+            --quiet 2>&1 | grep -E "(Loading|Installing|Updating)" || true
+    fi
+    
     echo "Composer установка завершена"
 else
     echo "Vendor директория уже существует, пропускаю установку"
