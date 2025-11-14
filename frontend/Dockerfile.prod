@@ -1,0 +1,34 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Копирование package файлов
+COPY package*.json ./
+
+# Установка зависимостей
+RUN npm ci --only=production
+
+# Копирование исходного кода
+COPY . .
+
+# Сборка приложения
+RUN npm run build
+
+# Production образ
+FROM node:18-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Копирование только необходимых файлов
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/next.config.js ./
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+

@@ -1,0 +1,41 @@
+# Environment
+.env
+.env.local
+frontend/.env.local
+frontend/.env*.local
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+.next/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Storage
+backend/storage/*
+!backend/storage/.gitkeep
+
+# Yii2
+backend/runtime/
+backend/web/assets/
+

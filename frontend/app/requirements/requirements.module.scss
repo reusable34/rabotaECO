@@ -1,0 +1,742 @@
+.requirements {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.header {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 1.5rem 2rem;
+
+  .headerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    max-width: 1400px;
+    margin: 0 auto;
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      color: #1a1a1a;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0.25rem 0 0 0;
+      color: #333;
+    }
+
+    .version {
+      font-size: 0.875rem;
+      color: #666;
+      margin: 0.25rem 0 0 0;
+    }
+
+    .headerActions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .exportButton {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #f9f9f9;
+        border-color: #bbb;
+      }
+
+      span {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+.filters {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 1.5rem 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  .filtersContent {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .filterRow {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    label {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.875rem;
+    }
+
+    .filterGroup {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    // Кнопка пересчета для админа/менеджера
+    .recalculateButton {
+      align-self: flex-start;
+      width: auto;
+      min-width: 200px;
+    }
+
+    .filterSelect,
+    .filterInput {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      background: white;
+
+      &:focus {
+        outline: none;
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+      }
+    }
+
+    .filterInput {
+      width: 100%;
+    }
+  }
+
+  .recalculateButton {
+    padding: 0.75rem 1.5rem;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      background: #357abd;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  margin: 0 2rem;
+  border-bottom: 2px solid #e0e0e0;
+  overflow-x: auto;
+
+  .tab {
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    color: #666;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #333;
+    }
+
+    &.tabActive {
+      color: #4a90e2;
+      border-bottom-color: #4a90e2;
+      font-weight: 600;
+    }
+  }
+}
+
+.content {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.tableWrapper {
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.requirementsTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background: #f9f9f9;
+    border-bottom: 2px solid #e0e0e0;
+
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #333;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #f9f9f9;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    td {
+      padding: 1rem;
+      font-size: 0.875rem;
+      color: #333;
+      vertical-align: top;
+    }
+  }
+}
+
+.requirementTitle {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.basisText {
+  color: #333;
+  font-size: 0.875rem;
+}
+
+.noBasis,
+.noArtifacts {
+  color: #999;
+  font-style: italic;
+}
+
+.artifacts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.artifact {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #f0f0f0;
+  border-radius: 0.25rem;
+  font-size: 0.8125rem;
+  color: #555;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.statusCompleted {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  &.statusInProgress {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  &.statusNotCompleted {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  &.statusPending {
+    background: #e2e3e5;
+    color: #383d41;
+  }
+}
+
+.empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #999;
+  font-size: 1.125rem;
+  background: white;
+  border-radius: 0.5rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 1.125rem;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem;
+
+    .headerContent {
+      flex-direction: column;
+      gap: 1rem;
+
+      .headerActions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+  }
+
+  .filters {
+    margin: 1rem;
+    padding: 1rem;
+
+    .filterRow .filterGroup {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .tabs {
+    margin: 0 1rem;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .tableWrapper {
+    overflow-x: scroll;
+  }
+
+  .requirementsTable {
+    min-width: 800px;
+  }
+}
+
+// Стили для контента вкладок
+.tabContent {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.artifactsHeader {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.uploadButton {
+  padding: 0.5rem 1rem;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #357abd;
+  }
+}
+
+.documentsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.documentCard {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.documentInfo {
+  flex: 1;
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .documentType {
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+    color: #666;
+  }
+}
+
+.downloadButton {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f0f0f0;
+    border-color: #bbb;
+  }
+}
+
+.section {
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1a1a1a;
+  }
+}
+
+.eventsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.eventCard {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+
+  &.past {
+    opacity: 0.7;
+  }
+}
+
+.eventDate {
+  font-weight: 600;
+  color: #4a90e2;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.eventTitle {
+  flex: 1;
+  color: #333;
+  font-size: 0.9375rem;
+}
+
+.completedBadge {
+  padding: 0.25rem 0.75rem;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.risksList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.riskCard {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+
+  h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+}
+
+.risks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.risk {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #fef2f2;
+  border-radius: 0.375rem;
+  gap: 0.75rem;
+}
+
+.article {
+  font-weight: 600;
+  color: #dc3545;
+  font-size: 0.875rem;
+}
+
+.fine {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.contractsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.contractCard {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.contractHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+}
+
+.contractDate {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.addButton {
+  padding: 0.5rem 1rem;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #357abd;
+  }
+}
+
+.editButton {
+  padding: 0.375rem 0.75rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #218838;
+  }
+}
+
+.deleteButton {
+  padding: 0.375rem 0.75rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #c82333;
+  }
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.875rem;
+
+    input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+.input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: white;
+
+  &:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  }
+}
+
+.modalButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.cancelButton {
+  padding: 0.5rem 1rem;
+  background: white;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f9f9f9;
+    border-color: #bbb;
+  }
+}
+
+.saveButton {
+  padding: 0.5rem 1rem;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #357abd;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.readOnlyField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 0.375rem;
+  border: 1px solid #e0e0e0;
+  min-width: 0; // Для правильной работы в grid
+}
+
+.readOnlyLabel {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.readOnlyValue {
+  font-size: 0.9375rem;
+  color: #1a1a1a;
+  font-weight: 500;
+  word-break: break-word;
+}

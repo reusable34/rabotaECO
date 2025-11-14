@@ -1,0 +1,23 @@
+/vendor/
+/node_modules/
+/.idea/
+/.vscode/
+*.log
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Yii2
+/runtime/
+/web/assets/
+/web/index-test.php
+
+# Environment
+.env
+.env.local
+
+# Storage (except .gitkeep)
+/storage/*
+!/storage/.gitkeep
+
