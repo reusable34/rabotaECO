@@ -21,10 +21,13 @@ echo "==========================================${NC}"
 echo ""
 
 # 1. Установка Git если нет
+echo -e "${YELLOW}[0/6] Установка Git...${NC}"
 if ! command -v git &> /dev/null; then
-    echo -e "${YELLOW}Установка Git...${NC}"
     apt-get update -qq
     apt-get install -y git
+    echo -e "${GREEN}✓ Git установлен${NC}"
+else
+    echo -e "${GREEN}✓ Git: $(git --version)${NC}"
 fi
 
 # 2. Установка Docker
