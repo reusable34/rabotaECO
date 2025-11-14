@@ -110,16 +110,34 @@ if [ -f "docker-compose.production.yml" ]; then
     COMPOSE_FILE="docker-compose.production.yml"
 fi
 
-# 9. Запуск
+# 9. Настройка для LXC контейнера
+echo -e "${YELLOW}Проверка окружения...${NC}"
+# Если в LXC контейнере, настраиваем Docker
+if [ -f /.dockerenv ] || grep -q "container=lxc" /proc/1/environ 2>/dev/null || [ -d /sys/fs/cgroup/systemd ]; then
+    echo "Обнаружен LXC контейнер, настраиваю Docker..."
+    # Отключаем проверку sysctl для LXC
+    mkdir -p /etc/docker
+    cat > /etc/docker/daemon.json << 'DOCKER_EOF'
+{
+  "userland-proxy": false,
+  "iptables": false,
+  "ip-forward": false
+}
+DOCKER_EOF
+    systemctl restart docker 2>/dev/null || service docker restart 2>/dev/null || true
+    sleep 3
+fi
+
+# 10. Запуск
 echo -e "${YELLOW}[5/6] Запуск контейнеров...${NC}"
 $DOCKER_COMPOSE -f "$COMPOSE_FILE" down 2>/dev/null || true
 $DOCKER_COMPOSE -f "$COMPOSE_FILE" up -d --build
 
-# 10. Ожидание
+# 11. Ожидание
 echo -e "${YELLOW}[6/6] Ожидание запуска (60 сек)...${NC}"
 sleep 60
 
-# 11. Миграции
+# 12. Миграции
 echo "Выполнение миграций..."
 for i in {1..30}; do
     $DOCKER_COMPOSE -f "$COMPOSE_FILE" exec -T db pg_isready -U eco_admin &>/dev/null 2>&1 && break || sleep 2
