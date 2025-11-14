@@ -124,27 +124,57 @@ fi
 
 # Создание конфигурации БД
 echo "Настройка конфигурации базы данных..."
+mkdir -p api/config common/config
+
+# Конфигурация для API
 if [ ! -f "api/config/params-local.php" ]; then
-    mkdir -p api/config
     cat > api/config/params-local.php << 'PHP'
 <?php
 return [
-    'db' => [
-        'class' => 'yii\db\Connection',
-        'dsn' => 'pgsql:host=localhost;dbname=eco_client',
-        'username' => 'eco_admin',
-        'password' => 'eco_pass',
-        'charset' => 'utf8',
-    ],
     'jwt' => [
         'secret' => 'supersecretkey',
     ],
 ];
 PHP
-    echo "Конфигурация создана"
-else
-    echo "Конфигурация уже существует"
 fi
+
+# Конфигурация БД для common
+if [ ! -f "common/config/main-local.php" ]; then
+    cat > common/config/main-local.php << 'PHP'
+<?php
+return [
+    'components' => [
+        'db' => [
+            'class' => 'yii\db\Connection',
+            'dsn' => 'pgsql:host=localhost;dbname=eco_client',
+            'username' => 'eco_admin',
+            'password' => 'eco_pass',
+            'charset' => 'utf8',
+        ],
+    ],
+];
+PHP
+fi
+
+# Конфигурация для console
+if [ ! -f "console/config/main-local.php" ]; then
+    cat > console/config/main-local.php << 'PHP'
+<?php
+return [
+    'components' => [
+        'db' => [
+            'class' => 'yii\db\Connection',
+            'dsn' => 'pgsql:host=localhost;dbname=eco_client',
+            'username' => 'eco_admin',
+            'password' => 'eco_pass',
+            'charset' => 'utf8',
+        ],
+    ],
+];
+PHP
+fi
+
+echo "Конфигурация БД создана"
 
 # Проверка структуры Yii2
 if [ ! -d "api" ]; then
@@ -170,22 +200,28 @@ chmod -R 777 storage
 
 # Миграции
 echo "Выполнение миграций..."
-if [ -f "$YII_PATH/yii" ]; then
-    cd "$YII_PATH"
+if [ -f "console/yii" ]; then
+    cd console
     php yii migrate --interactive=0 2>&1 | tail -10 || {
         echo -e "${YELLOW}Предупреждение: миграции завершились с ошибками${NC}"
     }
     cd "$BACKEND_DIR"
+elif [ -f "yii" ]; then
+    php yii migrate --interactive=0 2>&1 | tail -10 || {
+        echo -e "${YELLOW}Предупреждение: миграции завершились с ошибками${NC}"
+    }
 else
     echo -e "${YELLOW}Предупреждение: yii не найден, пропускаю миграции${NC}"
 fi
 
 # Seed данных
 echo "Загрузка тестовых данных..."
-if [ -f "$YII_PATH/yii" ]; then
-    cd "$YII_PATH"
+if [ -f "console/yii" ]; then
+    cd console
     php yii seed 2>&1 | tail -5 || echo "Seed не выполнен (возможно, команда не существует)"
     cd "$BACKEND_DIR"
+elif [ -f "yii" ]; then
+    php yii seed 2>&1 | tail -5 || echo "Seed не выполнен (возможно, команда не существует)"
 fi
 
 # 9. Настройка Frontend
