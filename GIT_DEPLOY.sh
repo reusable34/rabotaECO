@@ -106,7 +106,10 @@ fi
 
 # 8. Выбор конфигурации
 COMPOSE_FILE="docker-compose.yml"
-if [ -f "docker-compose.production.yml" ]; then
+if [ -f "docker-compose.lxc.yml" ] && (grep -q "container=lxc" /proc/1/environ 2>/dev/null || [ -d /sys/fs/cgroup/systemd ]); then
+    COMPOSE_FILE="docker-compose.lxc.yml"
+    echo "Использую конфигурацию для LXC"
+elif [ -f "docker-compose.production.yml" ]; then
     COMPOSE_FILE="docker-compose.production.yml"
 fi
 
@@ -115,24 +118,28 @@ echo -e "${YELLOW}Проверка окружения...${NC}"
 # Если в LXC контейнере, настраиваем Docker
 if [ -f /.dockerenv ] || grep -q "container=lxc" /proc/1/environ 2>/dev/null || [ -d /sys/fs/cgroup/systemd ]; then
     echo "Обнаружен LXC контейнер, настраиваю Docker..."
-    # Настраиваем Docker для работы в LXC
+    # Настраиваем Docker для работы в LXC без sysctl
     mkdir -p /etc/docker
-    if [ ! -f /etc/docker/daemon.json ]; then
-        cat > /etc/docker/daemon.json << 'DOCKER_EOF'
+    cat > /etc/docker/daemon.json << 'DOCKER_EOF'
 {
   "storage-driver": "overlay2",
   "log-driver": "json-file",
   "log-opts": {
     "max-size": "10m",
     "max-file": "3"
+  },
+  "default-ulimits": {
+    "nofile": {
+      "Name": "nofile",
+      "Hard": 64000,
+      "Soft": 64000
+    }
   }
 }
 DOCKER_EOF
-        systemctl restart docker 2>/dev/null || service docker restart 2>/dev/null || true
-        sleep 3
-    fi
-    # Настраиваем sysctl на уровне хоста (если возможно)
-    echo 0 > /proc/sys/net/ipv4/ip_unprivileged_port_start 2>/dev/null || true
+    systemctl restart docker 2>/dev/null || service docker restart 2>/dev/null || true
+    sleep 5
+    echo "Docker перезапущен для LXC"
 fi
 
 # 10. Запуск
