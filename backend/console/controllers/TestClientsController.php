@@ -8,6 +8,7 @@ use common\models\Risk;
 use common\models\Document;
 use common\models\Contract;
 use common\models\Event;
+use common\models\User;
 use common\services\RequirementGeneratorService;
 use Yii;
 use yii\console\Controller;
@@ -45,6 +46,11 @@ class TestClientsController extends Controller
         Event::deleteAll();
         $this->stdout("Удалены документы, договоры и события\n");
         
+        // Удаляем пользователей (кроме админа)
+        $userCount = User::find()->where(['!=', 'role', User::ROLE_ADMIN])->count();
+        User::deleteAll(['!=', 'role', User::ROLE_ADMIN]);
+        $this->stdout("Удалено пользователей (кроме админа): {$userCount}\n");
+        
         // Удаляем клиентов
         $clientCount = Client::find()->count();
         Client::deleteAll();
@@ -67,7 +73,19 @@ class TestClientsController extends Controller
             $this->stdout("✅ Создан клиент I категории (ID: {$client1->id})\n");
             RequirementGeneratorService::generateRequirements($client1);
             $reqCount = Requirement::find()->where(['client_id' => $client1->id])->count();
-            $this->stdout("   Создано требований: {$reqCount} (ожидается: 18)\n\n");
+            $this->stdout("   Создано требований: {$reqCount} (ожидается: 18)\n");
+            
+            // Создаем пользователя для клиента
+            $user1 = new User();
+            $user1->name = 'Иванов Иван Иванович';
+            $user1->email = 'client1@test.local';
+            $user1->setPassword('client1');
+            $user1->role = User::ROLE_CLIENT;
+            $user1->client_id = $client1->id;
+            $user1->generateAuthKey();
+            if ($user1->save()) {
+                $this->stdout("   Создан пользователь: client1@test.local / client1\n\n");
+            }
         } else {
             $this->stdout("❌ Ошибка создания клиента I категории: " . json_encode($client1->errors) . "\n\n");
         }
@@ -84,7 +102,19 @@ class TestClientsController extends Controller
             $this->stdout("✅ Создан клиент II категории (ID: {$client2->id})\n");
             RequirementGeneratorService::generateRequirements($client2);
             $reqCount = Requirement::find()->where(['client_id' => $client2->id])->count();
-            $this->stdout("   Создано требований: {$reqCount} (ожидается: 20 = 18 базовых + 2 река)\n\n");
+            $this->stdout("   Создано требований: {$reqCount} (ожидается: 20 = 18 базовых + 2 река)\n");
+            
+            // Создаем пользователя для клиента
+            $user2 = new User();
+            $user2->name = 'Петров Петр Петрович';
+            $user2->email = 'client2@test.local';
+            $user2->setPassword('client2');
+            $user2->role = User::ROLE_CLIENT;
+            $user2->client_id = $client2->id;
+            $user2->generateAuthKey();
+            if ($user2->save()) {
+                $this->stdout("   Создан пользователь: client2@test.local / client2\n\n");
+            }
         } else {
             $this->stdout("❌ Ошибка создания клиента II категории: " . json_encode($client2->errors) . "\n\n");
         }
@@ -101,7 +131,19 @@ class TestClientsController extends Controller
             $this->stdout("✅ Создан клиент III категории (ID: {$client3->id})\n");
             RequirementGeneratorService::generateRequirements($client3);
             $reqCount = Requirement::find()->where(['client_id' => $client3->id])->count();
-            $this->stdout("   Создано требований: {$reqCount} (ожидается: 16)\n\n");
+            $this->stdout("   Создано требований: {$reqCount} (ожидается: 16)\n");
+            
+            // Создаем пользователя для клиента
+            $user3 = new User();
+            $user3->name = 'Сидоров Сидор Сидорович';
+            $user3->email = 'client3@test.local';
+            $user3->setPassword('client3');
+            $user3->role = User::ROLE_CLIENT;
+            $user3->client_id = $client3->id;
+            $user3->generateAuthKey();
+            if ($user3->save()) {
+                $this->stdout("   Создан пользователь: client3@test.local / client3\n\n");
+            }
         } else {
             $this->stdout("❌ Ошибка создания клиента III категории: " . json_encode($client3->errors) . "\n\n");
         }
@@ -118,7 +160,19 @@ class TestClientsController extends Controller
             $this->stdout("✅ Создан клиент IV категории (ID: {$client4->id})\n");
             RequirementGeneratorService::generateRequirements($client4);
             $reqCount = Requirement::find()->where(['client_id' => $client4->id])->count();
-            $this->stdout("   Создано требований: {$reqCount} (ожидается: 10 = 8 базовых + 1 скважина + 1 побочный продукт)\n\n");
+            $this->stdout("   Создано требований: {$reqCount} (ожидается: 10 = 8 базовых + 1 скважина + 1 побочный продукт)\n");
+            
+            // Создаем пользователя для клиента
+            $user4 = new User();
+            $user4->name = 'Кузнецов Кузьма Кузьмич';
+            $user4->email = 'client4@test.local';
+            $user4->setPassword('client4');
+            $user4->role = User::ROLE_CLIENT;
+            $user4->client_id = $client4->id;
+            $user4->generateAuthKey();
+            if ($user4->save()) {
+                $this->stdout("   Создан пользователь: client4@test.local / client4\n\n");
+            }
         } else {
             $this->stdout("❌ Ошибка создания клиента IV категории: " . json_encode($client4->errors) . "\n\n");
         }
@@ -159,6 +213,28 @@ class TestClientsController extends Controller
         $this->stdout("  - Клиент II категории (с рекой): должно быть 20 требований\n");
         $this->stdout("  - Клиент III категории: должно быть 16 требований\n");
         $this->stdout("  - Клиент IV категории (скважина + побочный продукт): должно быть 10 требований\n\n");
+        $this->stdout("📋 УЧЕТНЫЕ ДАННЫЕ ДЛЯ ВХОДА:\n");
+        $this->stdout("==========================================\n");
+        $this->stdout("Клиент I категории:\n");
+        $this->stdout("  Email: client1@test.local\n");
+        $this->stdout("  Пароль: client1\n\n");
+        $this->stdout("Клиент II категории:\n");
+        $this->stdout("  Email: client2@test.local\n");
+        $this->stdout("  Пароль: client2\n\n");
+        $this->stdout("Клиент III категории:\n");
+        $this->stdout("  Email: client3@test.local\n");
+        $this->stdout("  Пароль: client3\n\n");
+        $this->stdout("Клиент IV категории:\n");
+        $this->stdout("  Email: client4@test.local\n");
+        $this->stdout("  Пароль: client4\n\n");
+        $this->stdout("Администратор (если существует):\n");
+        $admin = User::findOne(['role' => User::ROLE_ADMIN]);
+        if ($admin) {
+            $this->stdout("  Email: {$admin->email}\n");
+            $this->stdout("  Пароль: (используйте существующий пароль админа)\n\n");
+        } else {
+            $this->stdout("  Администратор не найден\n\n");
+        }
     }
 }
 
