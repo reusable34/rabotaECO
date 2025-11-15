@@ -899,7 +899,7 @@ function RequirementsPageContent() {
                 <div className={styles.readOnlyField}>
                   <span className={styles.readOnlyLabel}>Водопользование:</span>
                   <span className={styles.readOnlyValue}>
-                    {client?.has_well ? 'Скважина' : client?.has_river ? 'Озеро' : 'Не указано'}
+                    {client?.has_well ? 'Скважина' : client?.has_river ? 'Озеро' : 'Без водопользования'}
                   </span>
                 </div>
                 <div className={styles.readOnlyField}>
@@ -934,9 +934,10 @@ function RequirementsPageContent() {
 
                   <select
                     value={
-                      // Определяем выбранное значение: скважина или озеро
+                      // Определяем выбранное значение
                       (hasWell === true) ? 'well' :
                       (hasRiver === true) ? 'river' :
+                      (hasWell === false && hasRiver === false) ? 'no' :
                       ''
                     }
                     onChange={(e) => {
@@ -947,6 +948,9 @@ function RequirementsPageContent() {
                       } else if (val === 'river') {
                         setHasWell(false);
                         setHasRiver(true);
+                      } else if (val === 'no') {
+                        setHasWell(false);
+                        setHasRiver(false);
                       } else {
                         // Если выбрано пустое значение, сбрасываем оба
                         setHasWell('');
@@ -955,6 +959,7 @@ function RequirementsPageContent() {
                     }}
                     className={styles.filterSelect}
                   >
+                    <option value="no">Без водопользования</option>
                     <option value="well">Скважина</option>
                     <option value="river">Озеро</option>
                   </select>
