@@ -61,57 +61,14 @@ echo ""
 echo "[4/4] Проверка параметров клиента и пересчет требований..."
 cd "$BACKEND_DIR" || exit 1
 
-# Получаем токен админа
-ADMIN_EMAIL="admin@eco.local"
-ADMIN_PASSWORD="admin"  # Замените на реальный пароль, если отличается
+# Используем консольную команду Yii для пересчета (не требует токена)
+echo "Пересчет требований для клиента ID: $CLIENT_ID..."
+php yii recalculate-all/client $CLIENT_ID
 
-LOGIN_RESPONSE=$(curl -s -X POST "$API_URL/auth/login" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}")
-
-TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
-
-if [ -z "$TOKEN" ]; then
-    echo "❌ Ошибка: не удалось получить токен администратора"
-    echo "Проверьте логин и пароль в скрипте"
-    exit 1
-fi
-
-# Получаем информацию о клиенте
-CLIENT_INFO=$(curl -s -X GET "$API_URL/client/$CLIENT_ID" \
-  -H "Authorization: Bearer $TOKEN")
-
-CLIENT_NAME=$(echo "$CLIENT_INFO" | grep -o '"name":"[^"]*' | cut -d'"' -f4)
-CATEGORY_ID=$(echo "$CLIENT_INFO" | grep -o '"category_id":[0-9]*' | cut -d':' -f2)
-HAS_WELL=$(echo "$CLIENT_INFO" | grep -o '"has_well":[^,}]*' | cut -d':' -f2 | tr -d ' ')
-HAS_RIVER=$(echo "$CLIENT_INFO" | grep -o '"has_river":[^,}]*' | cut -d':' -f2 | tr -d ' ')
-HAS_BYPRODUCT=$(echo "$CLIENT_INFO" | grep -o '"has_byproduct":[^,}]*' | cut -d':' -f2 | tr -d ' ')
-
-echo "Клиент: $CLIENT_NAME"
-echo "Категория: $CATEGORY_ID"
-echo "Скважина: $HAS_WELL"
-echo "Река: $HAS_RIVER"
-echo "Побочный продукт: $HAS_BYPRODUCT"
-echo ""
-
-# Пересчитываем требования
-RECALC_RESPONSE=$(curl -s -X POST "$API_URL/requirement/recalculate" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"client_id\": $CLIENT_ID,
-    \"category_id\": $CATEGORY_ID,
-    \"has_well\": $HAS_WELL,
-    \"has_river\": $HAS_RIVER,
-    \"has_byproduct\": $HAS_BYPRODUCT
-  }")
-
-if echo "$RECALC_RESPONSE" | grep -q '"success":true'; then
-    REQ_COUNT=$(echo "$RECALC_RESPONSE" | grep -o '"count":[0-9]*' | cut -d':' -f2)
-    echo "✅ Требования успешно пересчитаны! Создано требований: $REQ_COUNT"
+if [ $? -eq 0 ]; then
+    echo "✅ Требования успешно пересчитаны!"
 else
     echo "❌ Ошибка при пересчете требований"
-    echo "Ответ: $RECALC_RESPONSE"
     exit 1
 fi
 
