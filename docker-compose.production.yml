@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: eco_db
+    privileged: true
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-eco_admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eco_pass}
