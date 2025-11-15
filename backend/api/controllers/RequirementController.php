@@ -68,8 +68,13 @@ class RequirementController extends ActiveController
     {
         $actions = parent::actions();
         
-        // НЕ регистрируем risks здесь - Yii2 автоматически найдет метод actionRisks()
-        // через extraPatterns в UrlRule или через явные маршруты
+        // Регистрируем кастомный action для risks через InlineAction
+        // Это нужно для того, чтобы Yii2 REST мог найти метод actionRisks через extraPatterns
+        $actions['risks'] = [
+            'class' => 'yii\base\InlineAction',
+            'controller' => $this,
+            'actionMethod' => 'actionRisks',
+        ];
         
         // Переопределяем actionIndex для фильтрации по client_id
         $actions['index']['prepareDataProvider'] = function() {
