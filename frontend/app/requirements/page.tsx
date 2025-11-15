@@ -68,6 +68,16 @@ function RequirementsPageContent() {
       const clients = Array.isArray(clientRes.data) ? clientRes.data : (clientRes.data?.items || []);
       let reqs = Array.isArray(requirementsRes.data) ? requirementsRes.data : (requirementsRes.data?.items || []);
       
+      // КРИТИЧЕСКИ ВАЖНО: Фильтруем требования по client_id из URL, чтобы не показывать требования от других клиентов
+      if (clientIdFromUrl) {
+        const clientIdNum = parseInt(clientIdFromUrl, 10);
+        const beforeFilter = reqs.length;
+        reqs = reqs.filter((req: Requirement) => req.client_id === clientIdNum);
+        if (process.env.NODE_ENV === 'development' && beforeFilter !== reqs.length) {
+          console.warn(`⚠️ Отфильтровано требований при загрузке: ${beforeFilter} -> ${reqs.length} (client_id=${clientIdNum})`);
+        }
+      }
+      
       const isDev = process.env.NODE_ENV === 'development';
       if (isDev) {
         console.log('🔍 DEBUG (начальная загрузка): Полный ответ API:', JSON.stringify(requirementsRes.data, null, 2));
@@ -280,6 +290,15 @@ function RequirementsPageContent() {
           // Добавляем timestamp для предотвращения кэширования
           const requirementsRes = await api.get(requirementUrl);
           let reqs = Array.isArray(requirementsRes.data) ? requirementsRes.data : (requirementsRes.data?.items || []);
+          
+          // КРИТИЧЕСКИ ВАЖНО: Фильтруем требования по client_id, чтобы не показывать требования от других клиентов
+          if (clientIdForReload) {
+            const beforeFilter = reqs.length;
+            reqs = reqs.filter((req: Requirement) => req.client_id === parseInt(String(clientIdForReload), 10));
+            if (process.env.NODE_ENV === 'development' && beforeFilter !== reqs.length) {
+              console.warn(`⚠️ Отфильтровано требований: ${beforeFilter} -> ${reqs.length} (client_id=${clientIdForReload})`);
+            }
+          }
           
           const isDev = process.env.NODE_ENV === 'development';
           if (isDev) {

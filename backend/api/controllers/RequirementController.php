@@ -95,13 +95,20 @@ class RequirementController extends ActiveController
             $filterClientId = $request->get('client_id');
             
             // Админ видит все требования, но может фильтровать по client_id
+            // КРИТИЧЕСКИ ВАЖНО: Если админ смотрит страницу клиента, ОБЯЗАТЕЛЬНО фильтруем по client_id
             if ($user->role === User::ROLE_ADMIN) {
                 $query = Requirement::find();
                 if ($filterClientId) {
-                    $query->where(['client_id' => $filterClientId]);
+                    // Явно фильтруем по client_id - это критически важно!
+                    $query->where(['client_id' => (int)$filterClientId]);
+                    Yii::info("API: Admin requesting requirements for client_id={$filterClientId} (FILTERED)");
+                } else {
+                    // Если client_id не указан, возвращаем пустой список (админ должен выбрать клиента)
+                    Yii::warning("API: Admin requesting requirements without client_id - returning empty list");
+                    $query->where('1=0'); // Пустой результат
                 }
                 $count = $query->count();
-                Yii::info("API: Admin requesting requirements" . ($filterClientId ? " for client_id={$filterClientId}" : "") . ", found: {$count}");
+                Yii::info("API: Admin requesting requirements" . ($filterClientId ? " for client_id={$filterClientId}" : " (NO CLIENT_ID)") . ", found: {$count}");
                 if ($filterClientId) {
                     // Логируем все требования для этого клиента
                     $allReqs = $query->all();
