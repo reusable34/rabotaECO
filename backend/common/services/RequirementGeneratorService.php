@@ -377,7 +377,7 @@ class RequirementGeneratorService
      * @param Requirement $requirement
      * @param string|null $basis
      */
-    private static function createRisksForRequirement(Requirement $requirement, ?string $basis): void
+    public static function createRisksForRequirement(Requirement $requirement, ?string $basis): void
     {
         if (!$basis) {
             return;

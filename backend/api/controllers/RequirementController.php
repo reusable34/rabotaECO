@@ -195,6 +195,8 @@ class RequirementController extends ActiveController
         }
         
         if ($model->save()) {
+            // Автоматически создаем риски на основе статей КоАП из basis (как в RequirementGeneratorService)
+            RequirementGeneratorService::createRisksForRequirement($model, $model->basis);
             return $model;
         }
         

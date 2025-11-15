@@ -52,7 +52,7 @@ fi
 echo ""
 
 # 4. Создание демо-пользователя
-echo -e "${YELLOW}[4/6] Создание демо-пользователя...${NC}"
+echo -e "${YELLOW}[4/7] Создание демо-пользователя...${NC}"
 cd /opt/eco-project/backend
 php yii seed 2>&1 | tail -10
 if [ $? -eq 0 ]; then
@@ -62,7 +62,18 @@ else
 fi
 echo ""
 
-# 5. Перезапуск PHP-FPM
+# 5. Генерация рисков для всех требований
+echo -e "${YELLOW}[5/7] Генерация рисков для требований...${NC}"
+cd /opt/eco-project/backend
+php yii generate-risks/all 2>&1 | tail -20
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Риски сгенерированы${NC}"
+else
+    echo -e "${YELLOW}⚠️  Риски могут быть уже созданы${NC}"
+fi
+echo ""
+
+# 6. Перезапуск PHP-FPM
 echo -e "${YELLOW}[5/6] Перезапуск PHP-FPM...${NC}"
 systemctl restart php8.2-fpm 2>/dev/null || systemctl restart php-fpm 2>/dev/null || true
 sleep 2
@@ -73,8 +84,8 @@ else
 fi
 echo ""
 
-# 6. Финальная проверка
-echo -e "${YELLOW}[6/6] Финальная проверка...${NC}"
+# 7. Финальная проверка
+echo -e "${YELLOW}[7/7] Финальная проверка...${NC}"
 cd /opt/eco-project/backend
 php -r "
 try {
