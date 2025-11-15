@@ -61,12 +61,27 @@ echo ""
 echo "[4/4] Проверка параметров клиента и пересчет требований..."
 cd "$BACKEND_DIR" || exit 1
 
+# Сначала проверяем, существует ли клиент
+echo "Проверка клиента ID: $CLIENT_ID..."
+CLIENT_CHECK=$(php yii client/list 2>/dev/null | grep -i "ID.*$CLIENT_ID" || echo "")
+
+if [ -z "$CLIENT_CHECK" ]; then
+    echo "⚠️ Клиент с ID $CLIENT_ID не найден. Список всех клиентов:"
+    php yii client/list 2>/dev/null || echo "Не удалось получить список клиентов"
+    echo ""
+    echo "Используйте правильный ID клиента из списка выше"
+    exit 1
+fi
+
 # Используем консольную команду Yii для пересчета (не требует токена)
 echo "Пересчет требований для клиента ID: $CLIENT_ID..."
 php yii recalculate-all/client $CLIENT_ID
 
 if [ $? -eq 0 ]; then
     echo "✅ Требования успешно пересчитаны!"
+    echo ""
+    echo "Проверка результата:"
+    php yii check-requirements/check $CLIENT_ID 2>/dev/null || echo "Не удалось проверить требования"
 else
     echo "❌ Ошибка при пересчете требований"
     exit 1
