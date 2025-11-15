@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import { Requirement, Client, Category, Document, Contract, Event, Risk } from '@/lib/types';
@@ -8,7 +8,7 @@ import styles from './requirements.module.scss';
 
 type TabType = 'requirements' | 'artifacts' | 'calendar' | 'risks' | 'legislation' | 'contracts' | 'costs' | 'templates';
 
-export default function RequirementsPage() {
+function RequirementsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('requirements');
@@ -949,5 +949,13 @@ export default function RequirementsPage() {
         {activeTab === 'templates' && renderTemplatesTab()}
       </main>
     </div>
+  );
+}
+
+export default function RequirementsPage() {
+  return (
+    <Suspense fallback={<div className={styles.loading}>Загрузка...</div>}>
+      <RequirementsPageContent />
+    </Suspense>
   );
 }
