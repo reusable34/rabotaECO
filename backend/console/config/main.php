@@ -24,9 +24,9 @@ return [
         ],
         'db' => [
             'class' => 'yii\db\Connection',
-            'dsn' => 'pgsql:host=' . getenv('DB_HOST') . ';dbname=' . getenv('DB_NAME'),
-            'username' => getenv('DB_USER'),
-            'password' => getenv('DB_PASSWORD'),
+            'dsn' => 'pgsql:host=' . (getenv('DB_HOST') ?: 'localhost') . ';dbname=' . (getenv('DB_NAME') ?: 'eco_client'),
+            'username' => getenv('DB_USER') ?: 'eco_admin',
+            'password' => getenv('DB_PASSWORD') ?: 'eco_pass',
             'charset' => 'utf8',
         ],
     ],
