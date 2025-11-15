@@ -81,8 +81,8 @@ export default function LoginPage() {
 
         <div className={styles.demoInfo}>
           <p><strong>Демо-данные:</strong></p>
-          <p>Email: client@demo.local</p>
-          <p>Password: client123</p>
+          <p>Email: admin@eco.local</p>
+          <p>Пароль: admin123</p>
         </div>
       </div>
     </div>
