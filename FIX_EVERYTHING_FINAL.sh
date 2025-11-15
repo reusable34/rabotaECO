@@ -74,7 +74,7 @@ fi
 echo ""
 
 # 6. Перезапуск PHP-FPM
-echo -e "${YELLOW}[5/6] Перезапуск PHP-FPM...${NC}"
+echo -e "${YELLOW}[6/7] Перезапуск PHP-FPM...${NC}"
 systemctl restart php8.2-fpm 2>/dev/null || systemctl restart php-fpm 2>/dev/null || true
 sleep 2
 if systemctl is-active --quiet php8.2-fpm || systemctl is-active --quiet php-fpm; then
