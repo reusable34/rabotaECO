@@ -52,8 +52,22 @@ sleep 5
 # 5. Запуск с privileged для всех контейнеров
 echo -e "${YELLOW}[5/5] Запуск контейнеров...${NC}"
 
+# Используем обычный docker-compose.production.yml но с privileged
+# Обновляем его на лету
+cd /opt/eco-project
+
+# Добавляем privileged ко всем сервисам в production конфиг
+sed -i '/^  backend:/a\    privileged: true' docker-compose.production.yml 2>/dev/null || \
+sed -i '/container_name: eco_backend/a\    privileged: true' docker-compose.production.yml
+
+sed -i '/^  frontend:/a\    privileged: true' docker-compose.production.yml 2>/dev/null || \
+sed -i '/container_name: eco_frontend/a\    privileged: true' docker-compose.production.yml
+
+sed -i '/^  adminer:/a\    privileged: true' docker-compose.production.yml 2>/dev/null || \
+sed -i '/container_name: eco_adminer/a\    privileged: true' docker-compose.production.yml
+
 # Временно добавляем privileged ко всем сервисам
-cat > /tmp/docker-compose-temp.yml << 'COMPOSE_EOF'
+cat > docker-compose.privileged.yml << 'COMPOSE_EOF'
 services:
   db:
     image: postgres:15-alpine
@@ -139,7 +153,7 @@ networks:
     driver: bridge
 COMPOSE_EOF
 
-docker compose -f /tmp/docker-compose-temp.yml up -d --build
+docker compose -f docker-compose.privileged.yml up -d --build
 
 # Ожидание
 echo "Ожидание запуска (60 сек)..."
@@ -148,11 +162,11 @@ sleep 60
 # Миграции
 echo "Выполнение миграций..."
 for i in {1..30}; do
-    docker compose -f /tmp/docker-compose-temp.yml exec -T db pg_isready -U eco_admin &>/dev/null 2>&1 && break || sleep 2
+    docker compose -f docker-compose.privileged.yml exec -T db pg_isready -U eco_admin &>/dev/null 2>&1 && break || sleep 2
 done
 
-docker compose -f /tmp/docker-compose-temp.yml exec -T backend php yii migrate --interactive=0 2>/dev/null || true
-docker compose -f /tmp/docker-compose-temp.yml exec -T backend php yii seed 2>/dev/null || true
+docker compose -f docker-compose.privileged.yml exec -T backend php yii migrate --interactive=0 2>/dev/null || true
+docker compose -f docker-compose.privileged.yml exec -T backend php yii seed 2>/dev/null || true
 
 IP=$(hostname -I | awk '{print $1}')
 
