@@ -108,7 +108,7 @@ export default function RequirementsPage() {
       const seenContractIds = new Set<number>();
       const seenContractNumbers = new Set<string>();
       const beforeContractFilterCount = conts.length;
-      conts = conts.filter(contract => {
+      conts = conts.filter((contract: Contract) => {
         if (seenContractIds.has(contract.id)) {
           console.warn('⚠️ Дубликат договора по ID:', contract.id, contract.number);
           return false;
