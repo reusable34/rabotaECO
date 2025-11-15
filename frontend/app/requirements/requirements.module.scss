@@ -150,6 +150,20 @@
   margin: 0 2rem;
   border-bottom: 2px solid #e0e0e0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  @media (max-width: 768px) {
+    margin: 0 1rem;
+  }
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 2px;
+  }
 
   .tab {
     padding: 1rem 1.5rem;
@@ -160,6 +174,12 @@
     font-size: 0.875rem;
     color: #666;
     transition: color 0.2s;
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+    }
 
     &:hover {
       color: #333;
@@ -314,6 +334,14 @@
       flex-direction: column;
       gap: 1rem;
 
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      h2 {
+        font-size: 1.125rem;
+      }
+
       .headerActions {
         width: 100%;
         justify-content: flex-end;
@@ -325,13 +353,26 @@
     margin: 1rem;
     padding: 1rem;
 
-    .filterRow .filterGroup {
-      grid-template-columns: 1fr;
+    .filterRow {
+      .filterGroup {
+        grid-template-columns: 1fr;
+      }
+
+      .recalculateButton {
+        width: 100%;
+        min-width: auto;
+      }
     }
   }
 
   .tabs {
     margin: 0 1rem;
+    padding: 0;
+
+    .tab {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+    }
   }
 
   .content {
@@ -340,10 +381,49 @@
 
   .tableWrapper {
     overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
   }
 
   .requirementsTable {
     min-width: 800px;
+
+    thead th {
+      padding: 0.75rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    tbody td {
+      padding: 0.75rem 0.5rem;
+      font-size: 0.8125rem;
+    }
+  }
+
+  .tabContent {
+    padding: 1rem;
+  }
+
+  .documentsList {
+    grid-template-columns: 1fr;
+  }
+
+  .contractsList {
+    grid-template-columns: 1fr;
+  }
+
+  .eventCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .riskCard {
+    padding: 1rem;
+  }
+
+  .risk {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }
 
