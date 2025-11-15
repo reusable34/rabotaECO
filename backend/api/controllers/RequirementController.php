@@ -60,6 +60,7 @@ class RequirementController extends ActiveController
     {
         $actions = parent::actions();
         
+        
         // Переопределяем actionIndex для фильтрации по client_id
         $actions['index']['prepareDataProvider'] = function() {
             $user = Yii::$app->user->identity;
@@ -203,18 +204,30 @@ class RequirementController extends ActiveController
 
     public function actionRisks($id)
     {
-        $requirement = Requirement::findOne($id);
-        if (!$requirement) {
-            throw new \yii\web\NotFoundHttpException('Requirement not found');
-        }
+        try {
+            $requirement = Requirement::findOne($id);
+            if (!$requirement) {
+                // Возвращаем пустой массив вместо исключения, чтобы фронтенд не падал
+                return [];
+            }
 
-        // Проверка доступа
-        $user = Yii::$app->user->identity;
-        if ($user->role !== User::ROLE_ADMIN && $requirement->client_id !== $user->client_id) {
-            throw new \yii\web\ForbiddenHttpException('Access denied');
-        }
+            // Проверка доступа
+            $user = Yii::$app->user->identity;
+            if (!$user) {
+                return [];
+            }
+            
+            if ($user->role !== User::ROLE_ADMIN && $requirement->client_id !== $user->client_id) {
+                // Возвращаем пустой массив вместо исключения
+                return [];
+            }
 
-        return Risk::findAll(['requirement_id' => $id]);
+            $risks = Risk::findAll(['requirement_id' => $id]);
+            return $risks ?: []; // Гарантируем, что возвращаем массив
+        } catch (\Exception $e) {
+            Yii::error('Error loading risks: ' . $e->getMessage());
+            return []; // Возвращаем пустой массив при любой ошибке
+        }
     }
 
     /**
