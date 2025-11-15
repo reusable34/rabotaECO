@@ -897,6 +897,12 @@ function RequirementsPageContent() {
                   </span>
                 </div>
                 <div className={styles.readOnlyField}>
+                  <span className={styles.readOnlyLabel}>Водопользование:</span>
+                  <span className={styles.readOnlyValue}>
+                    {client?.has_well ? 'Скважина' : client?.has_river ? 'Озеро' : 'Не указано'}
+                  </span>
+                </div>
+                <div className={styles.readOnlyField}>
                   <span className={styles.readOnlyLabel}>Побочный продукт:</span>
                   <span className={styles.readOnlyValue}>
                     {client?.has_byproduct ? 'Есть побочный продукт' : 'Нет побочного продукта/навоза/помёта'}
@@ -924,6 +930,33 @@ function RequirementsPageContent() {
                         {cat.title}
                       </option>
                     ))}
+                  </select>
+
+                  <select
+                    value={
+                      // Определяем выбранное значение: скважина или озеро
+                      (hasWell === true) ? 'well' :
+                      (hasRiver === true) ? 'river' :
+                      ''
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'well') {
+                        setHasWell(true);
+                        setHasRiver(false);
+                      } else if (val === 'river') {
+                        setHasWell(false);
+                        setHasRiver(true);
+                      } else {
+                        // Если выбрано пустое значение, сбрасываем оба
+                        setHasWell('');
+                        setHasRiver('');
+                      }
+                    }}
+                    className={styles.filterSelect}
+                  >
+                    <option value="well">Скважина</option>
+                    <option value="river">Озеро</option>
                   </select>
 
                   <select
