@@ -67,9 +67,10 @@ server {
         proxy_read_timeout 60s;
     }
 
-    # Backend API - ВАЖНО: завершающий слэш убирает /api из пути
-    location /api {
-        proxy_pass http://127.0.0.1:${BACKEND_PORT}/;
+    # Backend API - используем rewrite для правильной обработки пути
+    location /api/ {
+        rewrite ^/api/(.*)$ /\$1 break;
+        proxy_pass http://127.0.0.1:${BACKEND_PORT};
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -83,6 +84,11 @@ server {
         
         # Для загрузки файлов
         client_max_body_size 100M;
+    }
+    
+    # Обработка /api без завершающего слэша
+    location = /api {
+        return 301 /api/;
     }
 }
 EOF
@@ -107,11 +113,25 @@ echo -e "${YELLOW}[4/7] Проверка прав доступа...${NC}"
 # Убеждаемся, что директория storage существует и доступна для записи
 if [ -d "backend/api/storage" ]; then
     chmod -R 755 backend/api/storage
+    chown -R www-data:www-data backend/api/storage 2>/dev/null || chown -R root:root backend/api/storage
     echo -e "${GREEN}✅ Права доступа к storage обновлены${NC}"
 else
     mkdir -p backend/api/storage
     chmod -R 755 backend/api/storage
+    chown -R www-data:www-data backend/api/storage 2>/dev/null || chown -R root:root backend/api/storage
     echo -e "${GREEN}✅ Директория storage создана${NC}"
+fi
+
+# Исправляем права доступа к runtime директории
+if [ -d "backend/api/runtime" ]; then
+    chmod -R 755 backend/api/runtime
+    chown -R www-data:www-data backend/api/runtime 2>/dev/null || chown -R root:root backend/api/runtime
+    echo -e "${GREEN}✅ Права доступа к runtime обновлены${NC}"
+else
+    mkdir -p backend/api/runtime
+    chmod -R 755 backend/api/runtime
+    chown -R www-data:www-data backend/api/runtime 2>/dev/null || chown -R root:root backend/api/runtime
+    echo -e "${GREEN}✅ Директория runtime создана${NC}"
 fi
 echo ""
 
