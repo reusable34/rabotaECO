@@ -209,13 +209,15 @@ function RequirementsPageContent() {
       // Если значение не было изменено (пустая строка), используем значение из клиента, но явно преобразуем в boolean
       // КРИТИЧЕСКИ ВАЖНО: Всегда передаем явные значения, даже если они false
       // Это гарантирует, что выбор пользователя (включая "Без водопользования") сохранится
-      // Определяем значения: если явно выбрано (не пустая строка), используем выбор, иначе используем значение из клиента
-      const finalHasWell = hasWell !== '' ? (hasWell === true) : (client.has_well === true ? true : false);
-      const finalHasRiver = hasRiver !== '' ? (hasRiver === true) : (client.has_river === true ? true : false);
-      const finalHasByproduct = hasByproduct !== '' ? (hasByproduct === true) : (client.has_byproduct === true ? true : false);
+      // УПРОЩЕННАЯ ЛОГИКА: Если значение явно выбрано (не пустая строка), используем его, иначе используем значение из клиента
+      // ВАЖНО: false - это валидное значение выбора ("Без водопользования")
+      const finalHasWell = hasWell !== '' ? Boolean(hasWell) : Boolean(client.has_well || false);
+      const finalHasRiver = hasRiver !== '' ? Boolean(hasRiver) : Boolean(client.has_river || false);
+      const finalHasByproduct = hasByproduct !== '' ? Boolean(hasByproduct) : Boolean(client.has_byproduct || false);
       
       const requestData: any = {
         category_id: categoryId || client.category_id,
+        // ВСЕГДА передаем значения как boolean (true или false), никогда не undefined/null
         has_well: finalHasWell,
         has_river: finalHasRiver,
         has_byproduct: finalHasByproduct,
@@ -274,9 +276,9 @@ function RequirementsPageContent() {
           setCategoryId(updatedClient.category_id || '');
           
           // КРИТИЧЕСКИ ВАЖНО: ПРИОРИТЕТ отдаем значениям, которые были отправлены в запросе
-          // Это гарантирует, что выбор пользователя не сбросится, даже если в БД что-то не так
-          // Используем значения из requestData (которые мы отправили), а не из updatedClient
-          // Только если значение не было выбрано пользователем (пустая строка), используем значение из БД
+          // УПРОЩЕННАЯ ЛОГИКА: Если значение было выбрано пользователем (не пустая строка), используем его
+          // Иначе используем значение из БД (которое должно было сохраниться)
+          // ВАЖНО: false - это валидное значение выбора ("Без водопользования")
           const newHasWell = hasWell !== '' ? hasWell : (updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : ''));
           const newHasRiver = hasRiver !== '' ? hasRiver : (updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : ''));
           const newHasByproduct = hasByproduct !== '' ? hasByproduct : (updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : ''));
@@ -296,6 +298,7 @@ function RequirementsPageContent() {
             'newHasByproduct (будет установлено)': newHasByproduct,
           });
           
+          // ВАЖНО: Устанавливаем значения напрямую, без дополнительных проверок
           setHasWell(newHasWell);
           setHasRiver(newHasRiver);
           setHasByproduct(newHasByproduct);

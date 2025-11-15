@@ -328,8 +328,8 @@ class RequirementController extends ActiveController
         }
         
         // Явно устанавливаем булевы значения
-        // КРИТИЧЕСКИ ВАЖНО: Всегда обновляем значения, если они переданы в запросе
-        // Проверяем наличие ключа в POST данных, а не значение (так как false - это валидное значение)
+        // КРИТИЧЕСКИ ВАЖНО: ВСЕГДА обновляем значения водопользования, если они переданы в запросе
+        // УПРОЩЕННАЯ ЛОГИКА: Проверяем наличие ключа в POST данных (даже если значение false)
         $postData = $request->post();
         
         // Логируем входящие данные для отладки
@@ -341,25 +341,35 @@ class RequirementController extends ActiveController
         
         // ВСЕГДА обновляем значения, если они переданы в запросе
         // Используем array_key_exists для проверки наличия ключа (даже если значение false)
+        // УПРОЩЕННАЯ ЛОГИКА: Если ключ есть, обновляем значение (true или false)
         if (array_key_exists('has_well', $postData)) {
             $hasWellParam = $postData['has_well'];
             $oldValue = $client->has_well;
+            // Упрощенная логика: если значение truthy, то true, иначе false
             $client->has_well = ($hasWellParam === true || $hasWellParam === 'true' || $hasWellParam === 1 || $hasWellParam === '1') ? true : false;
-            Yii::info("Updated has_well: {$oldValue} -> " . var_export($client->has_well, true) . " (from param: " . var_export($hasWellParam, true) . ")");
+            Yii::info("✅ Updated has_well: " . var_export($oldValue, true) . " -> " . var_export($client->has_well, true) . " (from param: " . var_export($hasWellParam, true) . ")");
+        } else {
+            Yii::warning("⚠️ has_well NOT in POST data, keeping old value: " . var_export($client->has_well, true));
         }
         
         if (array_key_exists('has_river', $postData)) {
             $hasRiverParam = $postData['has_river'];
             $oldValue = $client->has_river;
+            // Упрощенная логика: если значение truthy, то true, иначе false
             $client->has_river = ($hasRiverParam === true || $hasRiverParam === 'true' || $hasRiverParam === 1 || $hasRiverParam === '1') ? true : false;
-            Yii::info("Updated has_river: {$oldValue} -> " . var_export($client->has_river, true) . " (from param: " . var_export($hasRiverParam, true) . ")");
+            Yii::info("✅ Updated has_river: " . var_export($oldValue, true) . " -> " . var_export($client->has_river, true) . " (from param: " . var_export($hasRiverParam, true) . ")");
+        } else {
+            Yii::warning("⚠️ has_river NOT in POST data, keeping old value: " . var_export($client->has_river, true));
         }
         
         if (array_key_exists('has_byproduct', $postData)) {
             $hasByproductParam = $postData['has_byproduct'];
             $oldValue = $client->has_byproduct;
+            // Упрощенная логика: если значение truthy, то true, иначе false
             $client->has_byproduct = ($hasByproductParam === true || $hasByproductParam === 'true' || $hasByproductParam === 1 || $hasByproductParam === '1') ? true : false;
-            Yii::info("Updated has_byproduct: {$oldValue} -> " . var_export($client->has_byproduct, true) . " (from param: " . var_export($hasByproductParam, true) . ")");
+            Yii::info("✅ Updated has_byproduct: " . var_export($oldValue, true) . " -> " . var_export($client->has_byproduct, true) . " (from param: " . var_export($hasByproductParam, true) . ")");
+        } else {
+            Yii::warning("⚠️ has_byproduct NOT in POST data, keeping old value: " . var_export($client->has_byproduct, true));
         }
         
         Yii::info("Client AFTER update (before save): has_well=" . var_export($client->has_well, true) . ", has_river=" . var_export($client->has_river, true) . ", has_byproduct=" . var_export($client->has_byproduct, true));
