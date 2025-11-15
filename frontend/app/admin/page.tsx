@@ -324,7 +324,7 @@ export default function AdminPage() {
         name: userForm.name,
         email: userForm.email,
         role: userForm.role,
-        client_id: userForm.client_id ? parseInt(userForm.client_id) : null,
+        client_id: userForm.client_id && userForm.client_id !== '' ? parseInt(userForm.client_id) : null,
       };
       
       if (userForm.password) {
@@ -332,10 +332,14 @@ export default function AdminPage() {
       }
       
       if (selectedUser) {
-        await api.patch(`/user/${selectedUser.id}`, userData);
+        console.log('Обновление пользователя:', selectedUser.id, userData);
+        const response = await api.patch(`/user/${selectedUser.id}`, userData);
+        console.log('Ответ сервера:', response.data);
         alert('Пользователь успешно обновлен!');
       } else {
-        await api.post('/user', userData);
+        console.log('Создание пользователя:', userData);
+        const response = await api.post('/user', userData);
+        console.log('Ответ сервера:', response.data);
         alert('Пользователь успешно создан!');
       }
       
@@ -350,7 +354,13 @@ export default function AdminPage() {
       });
       await loadData();
     } catch (error: any) {
-      alert(error.response?.data?.message || error.response?.data || 'Ошибка при сохранении пользователя');
+      console.error('Ошибка при сохранении пользователя:', error);
+      console.error('Детали ошибки:', error.response?.data);
+      const errorMessage = error.response?.data?.message || 
+                          (typeof error.response?.data === 'string' ? error.response.data : JSON.stringify(error.response?.data)) ||
+                          error.message ||
+                          'Ошибка при сохранении пользователя';
+      alert(`Ошибка: ${errorMessage}`);
     }
   };
 

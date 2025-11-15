@@ -95,7 +95,12 @@ class UserController extends ActiveController
         $model->name = $data['name'] ?? '';
         $model->email = $data['email'] ?? '';
         $model->role = $data['role'] ?? User::ROLE_CLIENT;
-        $model->client_id = $data['client_id'] ?? null;
+        // Обрабатываем пустую строку, 0, null как отсутствие привязки
+        if (isset($data['client_id']) && $data['client_id'] !== '' && $data['client_id'] !== null && $data['client_id'] !== 0) {
+            $model->client_id = (int)$data['client_id'];
+        } else {
+            $model->client_id = null;
+        }
         
         $password = $data['password'] ?? '';
         if (empty($password)) {
@@ -143,6 +148,9 @@ class UserController extends ActiveController
             $data = Yii::$app->request->getBodyParams();
         }
         
+        // Логирование для отладки
+        Yii::info("UserController::actionUpdate - ID: {$id}, Data: " . json_encode($data), 'application');
+        
         if (isset($data['name'])) {
             $model->name = $data['name'];
         }
@@ -153,7 +161,12 @@ class UserController extends ActiveController
             $model->role = $data['role'];
         }
         if (isset($data['client_id'])) {
-            $model->client_id = $data['client_id'] ? (int)$data['client_id'] : null;
+            // Обрабатываем пустую строку, 0, null как отсутствие привязки
+            if ($data['client_id'] === '' || $data['client_id'] === null || $data['client_id'] === 0) {
+                $model->client_id = null;
+            } else {
+                $model->client_id = (int)$data['client_id'];
+            }
         }
         
         if (isset($data['password']) && !empty($data['password'])) {
