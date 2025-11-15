@@ -57,36 +57,61 @@ cd /opt/eco-project/backend
 php -r "
 try {
     \$pdo = new PDO('pgsql:host=localhost;dbname=eco_client', 'eco_admin', 'eco_pass');
+    \$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     // Находим дубликаты по названию и client_id
     \$stmt = \$pdo->query(\"
-        SELECT title, client_id, COUNT(*) as cnt, MIN(id) as keep_id
+        SELECT title, client_id, MIN(id) as keep_id
         FROM requirements
         GROUP BY title, client_id
         HAVING COUNT(*) > 1
     \");
     
     \$duplicates = \$stmt->fetchAll(PDO::FETCH_ASSOC);
-    \$deleted = 0;
+    \$deletedReqs = 0;
+    \$deletedRisks = 0;
     
     foreach (\$duplicates as \$dup) {
-        // Удаляем все кроме первого (с минимальным ID)
-        \$delStmt = \$pdo->prepare(\"
-            DELETE FROM requirements 
+        // Получаем все ID дубликатов (кроме первого)
+        \$idsStmt = \$pdo->prepare(\"
+            SELECT id FROM requirements 
             WHERE title = :title 
             AND client_id = :client_id 
             AND id != :keep_id
         \");
-        \$delStmt->execute([
+        \$idsStmt->execute([
             ':title' => \$dup['title'],
             ':client_id' => \$dup['client_id'],
             ':keep_id' => \$dup['keep_id']
         ]);
-        \$deleted += \$delStmt->rowCount();
+        \$idsToDelete = \$idsStmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (empty(\$idsToDelete)) {
+            continue;
+        }
+        
+        \$idsStr = implode(',', \$idsToDelete);
+        
+        // Сначала удаляем связанные риски
+        \$riskDelStmt = \$pdo->query(\"
+            DELETE FROM risks 
+            WHERE requirement_id IN (\$idsStr)
+        \");
+        \$deletedRisks += \$riskDelStmt->rowCount();
+        
+        // Затем удаляем дубликаты требований
+        \$reqDelStmt = \$pdo->query(\"
+            DELETE FROM requirements 
+            WHERE id IN (\$idsStr)
+        \");
+        \$deletedReqs += \$reqDelStmt->rowCount();
     }
     
-    if (\$deleted > 0) {
-        echo '✅ Удалено дубликатов: ' . \$deleted . PHP_EOL;
+    if (\$deletedReqs > 0) {
+        echo '✅ Удалено дубликатов требований: ' . \$deletedReqs . PHP_EOL;
+        if (\$deletedRisks > 0) {
+            echo '✅ Удалено связанных рисков: ' . \$deletedRisks . PHP_EOL;
+        }
     } else {
         echo '✅ Дубликатов не найдено' . PHP_EOL;
     }

@@ -33,6 +33,9 @@ class RequirementController extends ActiveController
             'risks' => ['GET', 'OPTIONS'],
         ];
         
+        // Для OPTIONS запросов к risks не требуется аутентификация
+        // (обрабатывается через actionOptions)
+        
         $behaviors['access'] = [
             'class' => AccessControl::class,
             'rules' => [
@@ -65,12 +68,8 @@ class RequirementController extends ActiveController
     {
         $actions = parent::actions();
         
-        // Явно регистрируем кастомный action для risks
-        $actions['risks'] = [
-            'class' => 'yii\rest\Action',
-            'modelClass' => $this->modelClass,
-            'checkAccess' => [$this, 'checkAccess'],
-        ];
+        // НЕ регистрируем risks здесь - используем кастомный actionRisks() метод
+        // Yii2 автоматически найдет метод actionRisks() по маршруту из main.php
         
         // Переопределяем actionIndex для фильтрации по client_id
         $actions['index']['prepareDataProvider'] = function() {
