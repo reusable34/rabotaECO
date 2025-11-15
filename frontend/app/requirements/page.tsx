@@ -129,7 +129,7 @@ export default function RequirementsPage() {
       // Удаляем дубликаты событий по ID и названию
       const seenEventIds = new Set<number>();
       const seenEventTitles = new Set<string>();
-      evts = evts.filter(evt => {
+      evts = evts.filter((evt: Event) => {
         if (seenEventIds.has(evt.id)) return false;
         const key = `${evt.title}-${evt.date}`;
         if (seenEventTitles.has(key)) return false;
@@ -446,7 +446,7 @@ export default function RequirementsPage() {
     if (!confirm('Удалить это событие?')) return;
     try {
       await api.delete(`/event/${eventId}`);
-      setEvents(events.filter(e => e.id !== eventId));
+      setEvents(events.filter((e: Event) => e.id !== eventId));
     } catch (error) {
       console.error('Error deleting event:', error);
       alert('Ошибка при удалении события');
@@ -469,7 +469,7 @@ export default function RequirementsPage() {
 
       if (editingEvent) {
         const res = await api.patch(`/event/${editingEvent.id}`, payload);
-        setEvents(events.map(e => e.id === editingEvent.id ? { ...e, ...res.data } : e));
+        setEvents(events.map((e: Event) => e.id === editingEvent.id ? { ...e, ...res.data } : e));
       } else {
         const res = await api.post('/event', payload);
         setEvents([...events, res.data]);
@@ -480,7 +480,7 @@ export default function RequirementsPage() {
       const evts = Array.isArray(eventsRes.data) ? eventsRes.data : (eventsRes.data?.items || []);
       const seenEventIds = new Set<number>();
       const seenEventTitles = new Set<string>();
-      const uniqueEvts = evts.filter(evt => {
+      const uniqueEvts = evts.filter((evt: Event) => {
         if (seenEventIds.has(evt.id)) return false;
         const key = `${evt.title}-${evt.date}`;
         if (seenEventTitles.has(key)) return false;
@@ -678,7 +678,7 @@ export default function RequirementsPage() {
 
   const renderRisksTab = () => {
     const allRisks: Array<{ requirement: Requirement; risks: Risk[] }> = [];
-    requirements.forEach(req => {
+    requirements.forEach((req: Requirement) => {
       if (risks[req.id] && risks[req.id].length > 0) {
         allRisks.push({ requirement: req, risks: risks[req.id] });
       }

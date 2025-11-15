@@ -461,7 +461,7 @@ export default function AdminPage() {
                 <h3>КПЭ соответствия</h3>
                 <div className={styles.kpiValue}>
                   {(() => {
-                    const completed = requirements.filter(r => r.status === 'completed').length;
+                    const completed = requirements.filter((r: Requirement) => r.status === 'completed').length;
                     const total = requirements.length;
                     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
                     return `${percentage}%`;
@@ -472,7 +472,7 @@ export default function AdminPage() {
                     className={styles.progressFill}
                     style={{
                       width: `${(() => {
-                        const completed = requirements.filter(r => r.status === 'completed').length;
+                        const completed = requirements.filter((r: Requirement) => r.status === 'completed').length;
                         const total = requirements.length;
                         return total > 0 ? (completed / total) * 100 : 0;
                       })()}%`
@@ -481,13 +481,13 @@ export default function AdminPage() {
                 </div>
                 <div className={styles.statusCounts}>
                   <span className={styles.statusBadge} style={{background: '#d4edda', color: '#155724'}}>
-                    Выполнено: {requirements.filter(r => r.status === 'completed').length}
+                    Выполнено: {requirements.filter((r: Requirement) => r.status === 'completed').length}
                   </span>
                   <span className={styles.statusBadge} style={{background: '#fff3cd', color: '#856404'}}>
-                    В работе: {requirements.filter(r => r.status === 'in_progress').length}
+                    В работе: {requirements.filter((r: Requirement) => r.status === 'in_progress').length}
                   </span>
                   <span className={styles.statusBadge} style={{background: '#f8d7da', color: '#721c24'}}>
-                    Просрочено: {requirements.filter(r => r.status === 'not_completed').length}
+                    Просрочено: {requirements.filter((r: Requirement) => r.status === 'not_completed').length}
                   </span>
                 </div>
               </div>
@@ -599,7 +599,7 @@ export default function AdminPage() {
                     required
                   >
                     <option value="">Выберите категорию</option>
-                    {categories.map(cat => (
+                    {categories.map((cat: Category) => (
                       <option key={cat.id} value={cat.id}>{cat.title}</option>
                     ))}
                   </select>
@@ -775,7 +775,7 @@ export default function AdminPage() {
                   className={styles.filterSelect}
                 >
                   <option value="">Все клиенты</option>
-                  {clients.map(client => (
+                  {clients.map((client: Client) => (
                     <option key={client.id} value={client.id.toString()}>{client.name}</option>
                   ))}
                 </select>
@@ -821,7 +821,7 @@ export default function AdminPage() {
                     </thead>
                     <tbody>
                       {requirements
-                        .filter(req => !filterClientId || req.client_id.toString() === filterClientId)
+                        .filter((req: Requirement) => !filterClientId || req.client_id.toString() === filterClientId)
                         .map((req) => (
                         <tr key={req.id}>
                           <td className={styles.idCell}>{req.id}</td>
@@ -874,7 +874,7 @@ export default function AdminPage() {
                 </div>
                 {filterClientId && (
                   <div className={styles.filterInfo}>
-                    Показано требований: <strong>{requirements.filter(req => req.client_id.toString() === filterClientId).length}</strong> из <strong>{requirements.length}</strong>
+                    Показано требований: <strong>{requirements.filter((req: Requirement) => req.client_id.toString() === filterClientId).length}</strong> из <strong>{requirements.length}</strong>
                   </div>
                 )}
               </>
@@ -1024,7 +1024,7 @@ export default function AdminPage() {
                   required
                 >
                   <option value="">Выберите клиента</option>
-                  {clients.map(client => (
+                  {clients.map((client: Client) => (
                     <option key={client.id} value={client.id}>{client.name}</option>
                   ))}
                 </select>

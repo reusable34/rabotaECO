@@ -136,7 +136,7 @@ export default function CalendarPage() {
     if (!confirm('Удалить это событие?')) return;
     try {
       await api.delete(`/event/${eventId}`);
-      setEvents(events.filter(e => e.id !== eventId));
+      setEvents(events.filter((e: Event) => e.id !== eventId));
     } catch (error) {
       console.error('Error deleting event:', error);
       alert('Ошибка при удалении события');
