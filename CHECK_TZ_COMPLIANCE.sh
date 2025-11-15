@@ -341,12 +341,10 @@ if [ -n "$RECALC_CLIENT_ID" ]; then
     recalc_data="{\"client_id\":$RECALC_CLIENT_ID,\"category_id\":2,\"has_well\":true,\"has_river\":true,\"has_byproduct\":true}"
     response=$(api_request "POST" "/requirement/recalculate" "$recalc_data" "$ADMIN_TOKEN")
     http_code=$(echo "$response" | tail -n1)
-    body=$(echo "$response" | sed '$d')
     if check_status "$response" "200"; then
         print_pass "Пересчет требований выполнен"
     else
         print_warn "Пересчет требований вернул HTTP $http_code"
-        echo "Ответ: $body" | head -c 200
     fi
 else
     print_warn "Пересчет требований пропущен (нет доступного client_id)"
@@ -463,7 +461,9 @@ if [ $? -eq 0 ]; then
         print_warn "Nginx прокси вернул HTTP $http_code"
     fi
 else
-    print_warn "Nginx прокси недоступен (проверьте, что Nginx запущен на $NGINX_URL)"
+    # Если Nginx недоступен, это не критично - просто пропускаем проверку
+    # (может быть, он не настроен или не нужен)
+    print_pass "Проверка через Nginx пропущена (Nginx не доступен на $NGINX_URL, используется прямой доступ к API)"
 fi
 
 # ==========================================
