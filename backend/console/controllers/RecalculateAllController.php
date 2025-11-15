@@ -74,9 +74,24 @@ class RecalculateAllController extends Controller
         try {
             $transaction = Yii::$app->db->beginTransaction();
             
-            // Удаляем все старые требования
-            $deleted = Requirement::deleteAll(['client_id' => $client->id]);
+            // КРИТИЧЕСКИ ВАЖНО: Удаляем ВСЕ старые требования и риски ПЕРЕД генерацией
+            // Сначала удаляем риски
+            $riskDeleteQuery = "DELETE FROM risks WHERE requirement_id IN (SELECT id FROM requirements WHERE client_id = :client_id)";
+            $riskDeleted = Yii::$app->db->createCommand($riskDeleteQuery, [':client_id' => $client->id])->execute();
+            $this->stdout("Удалено рисков: {$riskDeleted}\n");
+            
+            // Затем удаляем все требования - используем прямой SQL для гарантии
+            $reqDeleteQuery = "DELETE FROM requirements WHERE client_id = :client_id";
+            $deleted = Yii::$app->db->createCommand($reqDeleteQuery, [':client_id' => $client->id])->execute();
             $this->stdout("Удалено старых требований: {$deleted}\n");
+            
+            // Проверяем, что все удалено
+            $remaining = Requirement::find()->where(['client_id' => $client->id])->count();
+            if ($remaining > 0) {
+                $this->stdout("⚠️ Предупреждение: осталось {$remaining} требований, принудительно удаляем...\n");
+                Requirement::deleteAll(['client_id' => $client->id]);
+                Yii::$app->db->createCommand($riskDeleteQuery, [':client_id' => $client->id])->execute();
+            }
             
             // Генерируем новые
             $requirements = RequirementGeneratorService::generateRequirements($client);
