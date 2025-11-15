@@ -287,14 +287,10 @@ server {
     listen $NGINX_PORT;
     server_name _;
 
-    # Health endpoint - проксируем на backend с правильными CORS
+    # Health endpoint - проксируем на backend
+    # CORS обрабатывается на уровне backend через CorsFilter
     location = /health {
-        # CORS заголовки для health endpoint
-        # Используем один if с регулярным выражением для всех разрешенных origins
-        if (\$http_origin ~* "^https?://((localhost|127\.0\.0\.1):300[0-9]+|85\.113\.129\.96(:3384)?|192\.168\.0\.32(:3384)?)$") {
-            add_header 'Access-Control-Allow-Origin' \$http_origin always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-        }
+        # Общие CORS заголовки (без проверки origin - backend сам проверит)
         add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, Accept, Origin' always;
         add_header 'Access-Control-Expose-Headers' 'Content-Disposition, Content-Type, Content-Length' always;
@@ -302,10 +298,6 @@ server {
         
         # Для OPTIONS запросов (preflight)
         if (\$request_method = 'OPTIONS') {
-            if (\$http_origin ~* "^https?://((localhost|127\.0\.0\.1):300[0-9]+|85\.113\.129\.96(:3384)?|192\.168\.0\.32(:3384)?)$") {
-                add_header 'Access-Control-Allow-Origin' \$http_origin always;
-                add_header 'Access-Control-Allow-Credentials' 'true' always;
-            }
             add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-Requested-With, Accept, Origin' always;
             add_header 'Access-Control-Max-Age' '3600' always;
