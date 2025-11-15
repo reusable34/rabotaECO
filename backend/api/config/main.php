@@ -56,7 +56,8 @@ return [
                 'POST auth/register' => 'auth/register',
                 'GET auth/me' => 'auth/me',
                 'OPTIONS <action>' => 'auth/options',
-                // Явный маршрут для OPTIONS запросов к document/download
+                // Явные маршруты для OPTIONS запросов к document
+                'OPTIONS document/upload' => 'document/options',
                 'OPTIONS document/<id:\d+>/download' => 'document/options',
                 [
                     'class' => 'yii\rest\UrlRule',
@@ -83,7 +84,9 @@ return [
                     'pluralize' => false,
                     'extraPatterns' => [
                         'POST upload' => 'upload',
+                        'OPTIONS upload' => 'options',
                         'GET {id}/download' => 'download',
+                        'OPTIONS {id}/download' => 'options',
                     ],
                     'tokens' => [
                         '{id}' => '<id:\\d+>',

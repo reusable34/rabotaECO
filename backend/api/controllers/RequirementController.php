@@ -219,8 +219,11 @@ class RequirementController extends ActiveController
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         
         try {
+            Yii::info("actionRisks called with id={$id}");
+            
             $requirement = Requirement::findOne($id);
             if (!$requirement) {
+                Yii::warning("Requirement with id={$id} not found");
                 // Возвращаем пустой массив вместо исключения, чтобы фронтенд не падал
                 return [];
             }
@@ -233,11 +236,13 @@ class RequirementController extends ActiveController
             }
             
             if ($user->role !== User::ROLE_ADMIN && $requirement->client_id !== $user->client_id) {
+                Yii::warning("Access denied: user client_id={$user->client_id}, requirement client_id={$requirement->client_id}");
                 // Возвращаем пустой массив вместо исключения
                 return [];
             }
 
             $risks = Risk::findAll(['requirement_id' => $id]);
+            Yii::info("Found " . count($risks) . " risks for requirement id={$id}");
             return $risks ?: []; // Гарантируем, что возвращаем массив
         } catch (\Exception $e) {
             Yii::error('Error loading risks: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
