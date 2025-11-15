@@ -369,22 +369,30 @@ class RequirementController extends ActiveController
         }
         
         // Сохраняем параметры клиента
+        Yii::info("Saving client with params: has_well=" . var_export($client->has_well, true) . ", has_river=" . var_export($client->has_river, true) . ", has_byproduct=" . var_export($client->has_byproduct, true));
+        
         if (!$client->save()) {
+            Yii::error("Failed to save client: " . json_encode($client->errors));
             Yii::$app->response->statusCode = 422;
             return ['success' => false, 'errors' => $client->errors];
         }
         
+        Yii::info("Client saved successfully");
+        
         // КРИТИЧЕСКИ ВАЖНО: Перезагружаем клиента из БД, чтобы убедиться, что параметры действительно обновились
         $client->refresh();
         
-        Yii::info("Updated client params: category_id={$client->category_id}, has_well=" . ($client->has_well ? 'true' : 'false') . ", has_river=" . ($client->has_river ? 'true' : 'false') . ", has_byproduct=" . ($client->has_byproduct ? 'true' : 'false'));
         Yii::info("Client data from DB after refresh: " . json_encode([
             'id' => $client->id,
             'category_id' => $client->category_id,
             'has_well' => $client->has_well,
             'has_river' => $client->has_river,
             'has_byproduct' => $client->has_byproduct,
-        ]));
+        ], JSON_PRETTY_PRINT));
+        
+        // Дополнительная проверка: читаем напрямую из БД
+        $dbCheck = Yii::$app->db->createCommand("SELECT has_well, has_river, has_byproduct FROM clients WHERE id = :id", [':id' => $client->id])->queryOne();
+        Yii::info("Direct DB check (raw SQL): " . json_encode($dbCheck, JSON_PRETTY_PRINT));
         
         // Удаляем старые требования (с транзакцией для надежности)
         $transaction = Yii::$app->db->beginTransaction();

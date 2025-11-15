@@ -273,23 +273,27 @@ function RequirementsPageContent() {
           setClient(updatedClient);
           setCategoryId(updatedClient.category_id || '');
           
-          // КРИТИЧЕСКИ ВАЖНО: Используем значения из БД (которые были сохранены)
-          // Но если пользователь явно выбрал значение (не пустая строка), сохраняем его выбор
+          // КРИТИЧЕСКИ ВАЖНО: ПРИОРИТЕТ отдаем значениям, которые были отправлены в запросе
           // Это гарантирует, что выбор пользователя не сбросится, даже если в БД что-то не так
+          // Используем значения из requestData (которые мы отправили), а не из updatedClient
+          // Только если значение не было выбрано пользователем (пустая строка), используем значение из БД
           const newHasWell = hasWell !== '' ? hasWell : (updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : ''));
           const newHasRiver = hasRiver !== '' ? hasRiver : (updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : ''));
           const newHasByproduct = hasByproduct !== '' ? hasByproduct : (updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : ''));
           
           console.log('🔍 Восстановление состояния после пересчета:', {
-            'hasWell (было)': hasWell,
-            'hasRiver (было)': hasRiver,
-            'hasByproduct (было)': hasByproduct,
-            'updatedClient.has_well': updatedClient.has_well,
-            'updatedClient.has_river': updatedClient.has_river,
-            'updatedClient.has_byproduct': updatedClient.has_byproduct,
-            'newHasWell': newHasWell,
-            'newHasRiver': newHasRiver,
-            'newHasByproduct': newHasByproduct,
+            'hasWell (было в состоянии)': hasWell,
+            'hasRiver (было в состоянии)': hasRiver,
+            'hasByproduct (было в состоянии)': hasByproduct,
+            'requestData.has_well (отправлено)': requestData.has_well,
+            'requestData.has_river (отправлено)': requestData.has_river,
+            'requestData.has_byproduct (отправлено)': requestData.has_byproduct,
+            'updatedClient.has_well (из БД)': updatedClient.has_well,
+            'updatedClient.has_river (из БД)': updatedClient.has_river,
+            'updatedClient.has_byproduct (из БД)': updatedClient.has_byproduct,
+            'newHasWell (будет установлено)': newHasWell,
+            'newHasRiver (будет установлено)': newHasRiver,
+            'newHasByproduct (будет установлено)': newHasByproduct,
           });
           
           setHasWell(newHasWell);
@@ -297,8 +301,7 @@ function RequirementsPageContent() {
           setHasByproduct(newHasByproduct);
           setResponsiblePerson(updatedClient.responsible_person || '');
         } else {
-          // Если клиент не вернулся в ответе, обновляем состояния из requestData, чтобы сохранить выбор пользователя
-          // Важно: сохраняем false как false, а не преобразуем в пустую строку
+          // Если клиент не вернулся в ответе, используем значения из requestData (которые мы отправили)
           console.log('⚠️ Клиент не вернулся в ответе, используем requestData:', requestData);
           setHasWell(requestData.has_well === true ? true : (requestData.has_well === false ? false : ''));
           setHasRiver(requestData.has_river === true ? true : (requestData.has_river === false ? false : ''));
