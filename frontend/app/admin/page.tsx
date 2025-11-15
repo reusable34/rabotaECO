@@ -858,9 +858,13 @@ export default function AdminPage() {
                 )}
                 <button 
                   onClick={() => {
+                    if (!filterClientId) {
+                      alert('Сначала выберите клиента');
+                      return;
+                    }
                     setSelectedRequirement(null);
                     setRequirementForm({
-                      client_id: clients.length > 0 ? clients[0].id.toString() : '',
+                      client_id: filterClientId,
                       title: '',
                       status: 'pending',
                       deadline: '',
@@ -870,6 +874,7 @@ export default function AdminPage() {
                     setShowRequirementForm(true);
                   }}
                   className={styles.addButton}
+                  disabled={!filterClientId}
                 >
                   + Добавить требование
                 </button>
