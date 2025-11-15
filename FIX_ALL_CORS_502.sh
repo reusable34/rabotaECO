@@ -25,17 +25,31 @@ cd /opt/eco-project || { echo -e "${RED}❌ Не найден /opt/eco-project${
 
 # Обновление из репозитория с разрешением конфликтов
 echo -e "${YELLOW}[0/10] Обновление из репозитория...${NC}"
-# Сохраняем локальные изменения если есть
-if [ -n "$(git status --porcelain)" ]; then
-    echo "Обнаружены локальные изменения, сохраняем..."
-    git stash push -m "Сохранение перед обновлением CORS" 2>/dev/null || true
+
+# Проверяем есть ли изменения
+HAS_CHANGES=$(git status --porcelain 2>/dev/null | wc -l)
+if [ "$HAS_CHANGES" -gt 0 ]; then
+    echo "Обнаружены локальные изменения, сохраняем в stash..."
+    git stash push -m "Сохранение перед обновлением CORS $(date)" 2>/dev/null || true
 fi
+
+# Удаляем untracked файлы которые могут конфликтовать (HealthController уже в репозитории)
+if [ -f "backend/api/controllers/HealthController.php" ]; then
+    if ! git ls-files --error-unmatch backend/api/controllers/HealthController.php >/dev/null 2>&1; then
+        echo "Удаляем локальную копию HealthController (будет из репозитория)..."
+        rm -f backend/api/controllers/HealthController.php
+    fi
+fi
+
 # Принудительно обновляем файлы из репозитория
 git fetch origin
-git reset --hard origin/main 2>/dev/null || git pull --no-edit 2>/dev/null || {
+if git reset --hard origin/main 2>/dev/null; then
+    echo -e "${GREEN}✅ Репозиторий обновлен (hard reset)${NC}"
+elif git pull --no-edit 2>/dev/null; then
+    echo -e "${GREEN}✅ Репозиторий обновлен (pull)${NC}"
+else
     echo -e "${YELLOW}⚠️  Не удалось обновить из репозитория, продолжаем с текущими файлами${NC}"
-}
-echo -e "${GREEN}✅ Репозиторий обновлен${NC}"
+fi
 echo ""
 
 # Теперь включаем строгую проверку ошибок
