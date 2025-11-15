@@ -51,8 +51,53 @@ else
 fi
 echo ""
 
-# 4. Создание демо-пользователя
-echo -e "${YELLOW}[4/7] Создание демо-пользователя...${NC}"
+# 4. Очистка дубликатов требований
+echo -e "${YELLOW}[4/8] Очистка дубликатов требований...${NC}"
+cd /opt/eco-project/backend
+php -r "
+try {
+    \$pdo = new PDO('pgsql:host=localhost;dbname=eco_client', 'eco_admin', 'eco_pass');
+    
+    // Находим дубликаты по названию и client_id
+    \$stmt = \$pdo->query(\"
+        SELECT title, client_id, COUNT(*) as cnt, MIN(id) as keep_id
+        FROM requirements
+        GROUP BY title, client_id
+        HAVING COUNT(*) > 1
+    \");
+    
+    \$duplicates = \$stmt->fetchAll(PDO::FETCH_ASSOC);
+    \$deleted = 0;
+    
+    foreach (\$duplicates as \$dup) {
+        // Удаляем все кроме первого (с минимальным ID)
+        \$delStmt = \$pdo->prepare(\"
+            DELETE FROM requirements 
+            WHERE title = :title 
+            AND client_id = :client_id 
+            AND id != :keep_id
+        \");
+        \$delStmt->execute([
+            ':title' => \$dup['title'],
+            ':client_id' => \$dup['client_id'],
+            ':keep_id' => \$dup['keep_id']
+        ]);
+        \$deleted += \$delStmt->rowCount();
+    }
+    
+    if (\$deleted > 0) {
+        echo '✅ Удалено дубликатов: ' . \$deleted . PHP_EOL;
+    } else {
+        echo '✅ Дубликатов не найдено' . PHP_EOL;
+    }
+} catch (PDOException \$e) {
+    echo '⚠️  Ошибка при очистке дубликатов: ' . \$e->getMessage() . PHP_EOL;
+}
+"
+echo ""
+
+# 5. Создание демо-пользователя
+echo -e "${YELLOW}[5/8] Создание демо-пользователя...${NC}"
 cd /opt/eco-project/backend
 php yii seed 2>&1 | tail -10
 if [ $? -eq 0 ]; then
@@ -62,8 +107,8 @@ else
 fi
 echo ""
 
-# 5. Генерация рисков для всех требований
-echo -e "${YELLOW}[5/7] Генерация рисков для требований...${NC}"
+# 6. Генерация рисков для всех требований
+echo -e "${YELLOW}[6/8] Генерация рисков для требований...${NC}"
 cd /opt/eco-project/backend
 php yii generate-risks/all 2>&1 | tail -20
 if [ $? -eq 0 ]; then
@@ -73,8 +118,8 @@ else
 fi
 echo ""
 
-# 6. Перезапуск PHP-FPM
-echo -e "${YELLOW}[6/7] Перезапуск PHP-FPM...${NC}"
+# 7. Перезапуск PHP-FPM
+echo -e "${YELLOW}[7/8] Перезапуск PHP-FPM...${NC}"
 systemctl restart php8.2-fpm 2>/dev/null || systemctl restart php-fpm 2>/dev/null || true
 sleep 2
 if systemctl is-active --quiet php8.2-fpm || systemctl is-active --quiet php-fpm; then
@@ -84,8 +129,8 @@ else
 fi
 echo ""
 
-# 7. Финальная проверка
-echo -e "${YELLOW}[7/7] Финальная проверка...${NC}"
+# 8. Финальная проверка
+echo -e "${YELLOW}[8/8] Финальная проверка...${NC}"
 cd /opt/eco-project/backend
 php -r "
 try {

@@ -28,6 +28,11 @@ class RequirementController extends ActiveController
             'except' => ['options'],
         ];
         
+        // Добавляем кастомный action для risks
+        $behaviors['verbFilter']['actions'] = [
+            'risks' => ['GET', 'OPTIONS'],
+        ];
+        
         $behaviors['access'] = [
             'class' => AccessControl::class,
             'rules' => [
@@ -60,6 +65,12 @@ class RequirementController extends ActiveController
     {
         $actions = parent::actions();
         
+        // Явно регистрируем кастомный action для risks
+        $actions['risks'] = [
+            'class' => 'yii\rest\Action',
+            'modelClass' => $this->modelClass,
+            'checkAccess' => [$this, 'checkAccess'],
+        ];
         
         // Переопределяем actionIndex для фильтрации по client_id
         $actions['index']['prepareDataProvider'] = function() {
@@ -206,6 +217,8 @@ class RequirementController extends ActiveController
 
     public function actionRisks($id)
     {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
         try {
             $requirement = Requirement::findOne($id);
             if (!$requirement) {
@@ -216,6 +229,7 @@ class RequirementController extends ActiveController
             // Проверка доступа
             $user = Yii::$app->user->identity;
             if (!$user) {
+                Yii::warning('User not authenticated in actionRisks');
                 return [];
             }
             
@@ -227,7 +241,7 @@ class RequirementController extends ActiveController
             $risks = Risk::findAll(['requirement_id' => $id]);
             return $risks ?: []; // Гарантируем, что возвращаем массив
         } catch (\Exception $e) {
-            Yii::error('Error loading risks: ' . $e->getMessage());
+            Yii::error('Error loading risks: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return []; // Возвращаем пустой массив при любой ошибке
         }
     }
