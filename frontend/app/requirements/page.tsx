@@ -266,11 +266,12 @@ function RequirementsPageContent() {
           const updatedClient = response.data.client;
           setClient(updatedClient);
           setCategoryId(updatedClient.category_id || '');
-          // КРИТИЧЕСКИ ВАЖНО: Сохраняем значения из БД, явно преобразуя в boolean или пустую строку
-          // Используем те же значения, что были отправлены в запросе, чтобы не сбрасывать выбор пользователя
-          setHasWell(updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : ''));
-          setHasRiver(updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : ''));
-          setHasByproduct(updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : ''));
+          // КРИТИЧЕСКИ ВАЖНО: Сохраняем значения из БД, но приоритет отдаем значениям, которые были отправлены в запросе
+          // Это гарантирует, что выбор пользователя не сбросится
+          // Если пользователь явно выбрал значение (не пустая строка), используем его, иначе используем значение из БД
+          setHasWell(hasWell !== '' ? hasWell : (updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : '')));
+          setHasRiver(hasRiver !== '' ? hasRiver : (updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : '')));
+          setHasByproduct(hasByproduct !== '' ? hasByproduct : (updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : '')));
           setResponsiblePerson(updatedClient.responsible_person || '');
         } else {
           // Если клиент не вернулся в ответе, обновляем состояния из requestData, чтобы сохранить выбор пользователя
