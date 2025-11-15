@@ -156,16 +156,28 @@ class DocumentController extends ActiveController
     {
         $user = Yii::$app->user->identity;
         
-        // client_id берется из user->client_id
-        $clientId = $user->client_id;
-        
-        if (!$clientId) {
-            throw new ForbiddenHttpException('Client ID is required');
+        if (!$user) {
+            throw new ForbiddenHttpException('User not authenticated');
         }
         
-        // Проверка доступа: клиент не может загружать документы для другого клиента
-        if ($user->role !== User::ROLE_ADMIN && $clientId != $user->client_id) {
-            throw new ForbiddenHttpException('Access denied');
+        // КРИТИЧЕСКИ ВАЖНО: Для админа client_id берется из POST запроса
+        // Для клиента/менеджера - из user->client_id
+        $request = Yii::$app->request;
+        $clientId = null;
+        
+        if ($user->role === User::ROLE_ADMIN) {
+            // Админ может загружать документы для любого клиента
+            $clientId = $request->post('client_id');
+            if (!$clientId) {
+                throw new ForbiddenHttpException('Client ID is required for admin');
+            }
+            $clientId = (int)$clientId;
+        } else {
+            // Для клиента/менеджера client_id берется из user->client_id
+            $clientId = $user->client_id;
+            if (!$clientId) {
+                throw new ForbiddenHttpException('Client ID is required');
+            }
         }
         
         // Получаем файл из запроса
@@ -188,7 +200,23 @@ class DocumentController extends ActiveController
         $storagePath = Yii::getAlias('@api/storage/clients/' . $clientId);
         
         if (!is_dir($storagePath)) {
-            mkdir($storagePath, 0755, true);
+            if (!mkdir($storagePath, 0755, true)) {
+                Yii::error("Failed to create storage directory: {$storagePath}");
+                Yii::$app->response->statusCode = 500;
+                return ['error' => 'Failed to create storage directory'];
+            }
+            // КРИТИЧЕСКИ ВАЖНО: Устанавливаем правильные права доступа
+            chmod($storagePath, 0755);
+            // Пытаемся установить владельца (www-data или root)
+            $owner = file_exists('/etc/debian_version') ? 'www-data' : 'root';
+            @chown($storagePath, $owner);
+        }
+        
+        // Проверяем права на запись
+        if (!is_writable($storagePath)) {
+            Yii::error("Storage directory is not writable: {$storagePath}");
+            Yii::$app->response->statusCode = 500;
+            return ['error' => 'Storage directory is not writable'];
         }
         
         // Используем оригинальное имя файла, но проверяем на конфликты
