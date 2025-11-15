@@ -328,21 +328,22 @@ class RequirementController extends ActiveController
         }
         
         // Явно устанавливаем булевы значения
-        // КРИТИЧЕСКИ ВАЖНО: Проверяем, был ли параметр передан явно
-        // Если параметр передан (даже как false), используем его значение
-        // Если параметр не передан (null), сохраняем текущее значение клиента
-        $hasWellParam = $request->post('has_well', null);
-        if ($hasWellParam !== null) {
+        // КРИТИЧЕСКИ ВАЖНО: Всегда обновляем значения, если они переданы в запросе
+        // Проверяем наличие ключа в POST данных, а не значение (так как false - это валидное значение)
+        $postData = $request->post();
+        
+        if (array_key_exists('has_well', $postData)) {
+            $hasWellParam = $postData['has_well'];
             $client->has_well = ($hasWellParam === true || $hasWellParam === 'true' || $hasWellParam === 1 || $hasWellParam === '1') ? true : false;
         }
         
-        $hasRiverParam = $request->post('has_river', null);
-        if ($hasRiverParam !== null) {
+        if (array_key_exists('has_river', $postData)) {
+            $hasRiverParam = $postData['has_river'];
             $client->has_river = ($hasRiverParam === true || $hasRiverParam === 'true' || $hasRiverParam === 1 || $hasRiverParam === '1') ? true : false;
         }
         
-        $hasByproductParam = $request->post('has_byproduct', null);
-        if ($hasByproductParam !== null) {
+        if (array_key_exists('has_byproduct', $postData)) {
+            $hasByproductParam = $postData['has_byproduct'];
             $client->has_byproduct = ($hasByproductParam === true || $hasByproductParam === 'true' || $hasByproductParam === 1 || $hasByproductParam === '1') ? true : false;
         }
         

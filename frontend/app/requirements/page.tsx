@@ -207,13 +207,15 @@ function RequirementsPageContent() {
       // Для клиента передаем client_id, чтобы избежать ошибки
       // Явно передаем булевы значения - всегда используем актуальные значения из состояния
       // Если значение не было изменено (пустая строка), используем значение из клиента, но явно преобразуем в boolean
+      // КРИТИЧЕСКИ ВАЖНО: Всегда передаем явные значения, даже если они false
+      // Это гарантирует, что выбор пользователя (включая "Без водопользования") сохранится
       const requestData: any = {
         category_id: categoryId || client.category_id,
-        // КРИТИЧЕСКИ ВАЖНО: Если значение не выбрано (пустая строка), используем значение из клиента
-        // Если значение явно выбрано (true/false), используем его
-        has_well: hasWell === '' ? (client.has_well || false) : Boolean(hasWell),
-        has_river: hasRiver === '' ? (client.has_river || false) : Boolean(hasRiver),
-        has_byproduct: hasByproduct === '' ? (client.has_byproduct || false) : Boolean(hasByproduct),
+        // Если значение явно выбрано (не пустая строка), используем его
+        // Если не выбрано (пустая строка), используем значение из клиента, но явно преобразуем в boolean
+        has_well: hasWell === '' ? (client.has_well === true ? true : false) : (hasWell === true),
+        has_river: hasRiver === '' ? (client.has_river === true ? true : false) : (hasRiver === true),
+        has_byproduct: hasByproduct === '' ? (client.has_byproduct === true ? true : false) : (hasByproduct === true),
         responsible_person: responsiblePerson || client.responsible_person || '',
       };
       
@@ -269,15 +271,17 @@ function RequirementsPageContent() {
           // КРИТИЧЕСКИ ВАЖНО: Сохраняем значения из БД, но приоритет отдаем значениям, которые были отправлены в запросе
           // Это гарантирует, что выбор пользователя не сбросится
           // Если пользователь явно выбрал значение (не пустая строка), используем его, иначе используем значение из БД
+          // Важно: false - это валидное значение выбора ("Без водопользования"), поэтому проверяем !== '' а не truthy
           setHasWell(hasWell !== '' ? hasWell : (updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : '')));
           setHasRiver(hasRiver !== '' ? hasRiver : (updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : '')));
           setHasByproduct(hasByproduct !== '' ? hasByproduct : (updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : '')));
           setResponsiblePerson(updatedClient.responsible_person || '');
         } else {
           // Если клиент не вернулся в ответе, обновляем состояния из requestData, чтобы сохранить выбор пользователя
-          setHasWell(requestData.has_well ? true : false);
-          setHasRiver(requestData.has_river ? true : false);
-          setHasByproduct(requestData.has_byproduct ? true : false);
+          // Важно: сохраняем false как false, а не преобразуем в пустую строку
+          setHasWell(requestData.has_well === true ? true : (requestData.has_well === false ? false : ''));
+          setHasRiver(requestData.has_river === true ? true : (requestData.has_river === false ? false : ''));
+          setHasByproduct(requestData.has_byproduct === true ? true : (requestData.has_byproduct === false ? false : ''));
         }
         
         // Перезагружаем требования сразу с принудительным обновлением
@@ -910,9 +914,14 @@ function RequirementsPageContent() {
 
                   <select
                     value={
-                      hasWell || hasRiver 
-                        ? (hasWell ? 'well' : hasRiver ? 'river' : '')
-                        : (hasWell === false && hasRiver === false ? 'no' : '')
+                      // КРИТИЧЕСКИ ВАЖНО: Правильно определяем выбранное значение
+                      // Если явно выбрано true для одного из параметров
+                      (hasWell === true) ? 'well' :
+                      (hasRiver === true) ? 'river' :
+                      // Если явно выбрано false для обоих (пользователь выбрал "Без водопользования")
+                      (hasWell === false && hasRiver === false) ? 'no' :
+                      // Иначе не выбрано (пустая строка)
+                      ''
                     }
                     onChange={(e) => {
                       const val = e.target.value;
