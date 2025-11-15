@@ -106,11 +106,10 @@ fi
 
 # 8. Выбор конфигурации
 COMPOSE_FILE="docker-compose.yml"
-if [ -f "docker-compose.lxc.yml" ] && (grep -q "container=lxc" /proc/1/environ 2>/dev/null || [ -d /sys/fs/cgroup/systemd ]); then
-    COMPOSE_FILE="docker-compose.lxc.yml"
-    echo "Использую конфигурацию для LXC"
-elif [ -f "docker-compose.production.yml" ]; then
+# Используем production конфигурацию (без проблемных LXC настроек)
+if [ -f "docker-compose.production.yml" ]; then
     COMPOSE_FILE="docker-compose.production.yml"
+    echo "Использую production конфигурацию"
 fi
 
 # 9. Настройка для LXC контейнера
