@@ -59,7 +59,7 @@ return [
                 // Явные маршруты для OPTIONS запросов к document
                 'OPTIONS document/upload' => 'document/options',
                 'OPTIONS document/<id:\d+>/download' => 'document/options',
-                // Явные маршруты для requirement/{id}/risks
+                // Явные маршруты для requirement/{id}/risks (должны быть ДО UrlRule)
                 'GET requirement/<id:\d+>/risks' => 'requirement/risks',
                 'OPTIONS requirement/<id:\d+>/risks' => 'requirement/options',
                 [
@@ -72,6 +72,8 @@ return [
                     'controller' => 'requirement',
                     'pluralize' => false,
                     'extraPatterns' => [
+                        'GET {id}/risks' => 'risks',
+                        'OPTIONS {id}/risks' => 'options',
                         'POST recalculate' => 'recalculate',
                         'OPTIONS recalculate' => 'options',
                     ],
