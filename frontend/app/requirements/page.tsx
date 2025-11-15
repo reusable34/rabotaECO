@@ -157,7 +157,8 @@ function RequirementsPageContent() {
         const currentClient = clients[0];
         setClient(currentClient);
         setCategoryId(currentClient.category_id || '');
-        // Инициализируем значения - если false, то явно false, иначе пустая строка для "не выбрано"
+        // Инициализируем значения из клиента - явно преобразуем в boolean или пустую строку
+        // Если значение явно false в БД, устанавливаем false, иначе пустая строка (не выбрано)
         setHasWell(currentClient.has_well === true ? true : (currentClient.has_well === false ? false : ''));
         setHasRiver(currentClient.has_river === true ? true : (currentClient.has_river === false ? false : ''));
         setHasByproduct(currentClient.has_byproduct === true ? true : (currentClient.has_byproduct === false ? false : ''));
@@ -194,25 +195,32 @@ function RequirementsPageContent() {
     setRecalculating(true);
     try {
       // Для клиента передаем client_id, чтобы избежать ошибки
-      // Явно передаем булевы значения - если не выбрано или пустая строка, значит false
-      // Важно: если значение не было изменено пользователем (пустая строка), используем значение из клиента
+      // Явно передаем булевы значения - всегда используем актуальные значения из состояния
+      // Если значение не было изменено (пустая строка), используем значение из клиента, но явно преобразуем в boolean
       const requestData: any = {
         category_id: categoryId || client.category_id,
-        has_well: hasWell === '' ? (client.has_well || false) : Boolean(hasWell),
-        has_river: hasRiver === '' ? (client.has_river || false) : Boolean(hasRiver),
-        has_byproduct: hasByproduct === '' ? (client.has_byproduct || false) : Boolean(hasByproduct),
+        // Всегда передаем явные boolean значения
+        has_well: hasWell === '' ? Boolean(client.has_well || false) : Boolean(hasWell),
+        has_river: hasRiver === '' ? Boolean(client.has_river || false) : Boolean(hasRiver),
+        has_byproduct: hasByproduct === '' ? Boolean(client.has_byproduct || false) : Boolean(hasByproduct),
         responsible_person: responsiblePerson || client.responsible_person || '',
       };
       
-      console.log('Пересчет требований с параметрами:', {
-        category_id: requestData.category_id,
-        has_well: requestData.has_well,
-        has_river: requestData.has_river,
-        has_byproduct: requestData.has_byproduct,
-        'hasWell state': hasWell,
-        'hasRiver state': hasRiver,
-        'hasByproduct state': hasByproduct,
-      });
+      const isDev = process.env.NODE_ENV === 'development';
+      if (isDev) {
+        console.log('Пересчет требований с параметрами:', {
+          category_id: requestData.category_id,
+          has_well: requestData.has_well,
+          has_river: requestData.has_river,
+          has_byproduct: requestData.has_byproduct,
+          'hasWell state': hasWell,
+          'hasRiver state': hasRiver,
+          'hasByproduct state': hasByproduct,
+          'client.has_well': client.has_well,
+          'client.has_river': client.has_river,
+          'client.has_byproduct': client.has_byproduct,
+        });
+      }
       
       // Если есть client_id, передаем его (для админа)
       if (client.id) {

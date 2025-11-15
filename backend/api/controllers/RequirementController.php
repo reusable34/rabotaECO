@@ -313,10 +313,29 @@ class RequirementController extends ActiveController
         if ($categoryId !== null) {
             $client->category_id = (int)$categoryId;
         }
-        // Явно устанавливаем булевы значения - если не передано, значит false
-        $client->has_well = $request->post('has_well') === true || $request->post('has_well') === 'true' || $request->post('has_well') === 1 || $request->post('has_well') === '1';
-        $client->has_river = $request->post('has_river') === true || $request->post('has_river') === 'true' || $request->post('has_river') === 1 || $request->post('has_river') === '1';
-        $client->has_byproduct = $request->post('has_byproduct') === true || $request->post('has_byproduct') === 'true' || $request->post('has_byproduct') === 1 || $request->post('has_byproduct') === '1';
+        
+        // Явно устанавливаем булевы значения
+        // Если параметр передан - используем его значение, иначе устанавливаем false
+        $hasWellParam = $request->post('has_well');
+        if ($hasWellParam !== null) {
+            $client->has_well = $hasWellParam === true || $hasWellParam === 'true' || $hasWellParam === 1 || $hasWellParam === '1';
+        } else {
+            $client->has_well = false; // Явно устанавливаем false, если не передано
+        }
+        
+        $hasRiverParam = $request->post('has_river');
+        if ($hasRiverParam !== null) {
+            $client->has_river = $hasRiverParam === true || $hasRiverParam === 'true' || $hasRiverParam === 1 || $hasRiverParam === '1';
+        } else {
+            $client->has_river = false; // Явно устанавливаем false, если не передано
+        }
+        
+        $hasByproductParam = $request->post('has_byproduct');
+        if ($hasByproductParam !== null) {
+            $client->has_byproduct = $hasByproductParam === true || $hasByproductParam === 'true' || $hasByproductParam === 1 || $hasByproductParam === '1';
+        } else {
+            $client->has_byproduct = false; // Явно устанавливаем false, если не передано
+        }
         
         if ($responsiblePerson !== null) {
             $client->responsible_person = $responsiblePerson;
@@ -328,7 +347,17 @@ class RequirementController extends ActiveController
             return ['success' => false, 'errors' => $client->errors];
         }
         
+        // КРИТИЧЕСКИ ВАЖНО: Перезагружаем клиента из БД, чтобы убедиться, что параметры действительно обновились
+        $client->refresh();
+        
         Yii::info("Updated client params: category_id={$client->category_id}, has_well=" . ($client->has_well ? 'true' : 'false') . ", has_river=" . ($client->has_river ? 'true' : 'false') . ", has_byproduct=" . ($client->has_byproduct ? 'true' : 'false'));
+        Yii::info("Client data from DB after refresh: " . json_encode([
+            'id' => $client->id,
+            'category_id' => $client->category_id,
+            'has_well' => $client->has_well,
+            'has_river' => $client->has_river,
+            'has_byproduct' => $client->has_byproduct,
+        ]));
         
         // Удаляем старые требования (с транзакцией для надежности)
         $transaction = Yii::$app->db->beginTransaction();
