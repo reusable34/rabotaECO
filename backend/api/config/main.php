@@ -59,14 +59,14 @@ return [
                 // Явные маршруты для OPTIONS запросов к document
                 'OPTIONS document/upload' => 'document/options',
                 'OPTIONS document/<id:\d+>/download' => 'document/options',
-                // Явные маршруты для requirement/{id}/risks (должны быть ДО UrlRule)
-                'GET requirement/<id:\d+>/risks' => 'requirement/risks',
-                'OPTIONS requirement/<id:\d+>/risks' => 'requirement/options',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'client',
                     'pluralize' => false,
                 ],
+                // Явные маршруты для requirement/{id}/risks ПЕРЕД UrlRule для приоритета
+                'GET requirement/<id:\d+>/risks' => 'requirement/risks',
+                'OPTIONS requirement/<id:\d+>/risks' => 'requirement/options',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'requirement',

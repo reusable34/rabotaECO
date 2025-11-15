@@ -68,8 +68,8 @@ class RequirementController extends ActiveController
     {
         $actions = parent::actions();
         
-        // НЕ регистрируем risks здесь - используем кастомный actionRisks() метод
-        // Явные маршруты в main.php должны вызывать actionRisks() напрямую
+        // НЕ регистрируем risks здесь - Yii2 автоматически найдет метод actionRisks()
+        // через extraPatterns в UrlRule или через явные маршруты
         
         // Переопределяем actionIndex для фильтрации по client_id
         $actions['index']['prepareDataProvider'] = function() {
