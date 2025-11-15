@@ -59,6 +59,9 @@ return [
                 // Явные маршруты для OPTIONS запросов к document
                 'OPTIONS document/upload' => 'document/options',
                 'OPTIONS document/<id:\d+>/download' => 'document/options',
+                // Явные маршруты для requirement/{id}/risks
+                'GET requirement/<id:\d+>/risks' => 'requirement/risks',
+                'OPTIONS requirement/<id:\d+>/risks' => 'requirement/options',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'client',

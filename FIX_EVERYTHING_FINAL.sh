@@ -19,14 +19,14 @@ echo ""
 cd /opt/eco-project || exit 1
 
 # 1. Обновление кода
-echo -e "${YELLOW}[1/5] Обновление кода...${NC}"
+echo -e "${YELLOW}[1/8] Обновление кода...${NC}"
 git fetch origin
 git reset --hard origin/main 2>/dev/null || git pull --no-edit
 echo -e "${GREEN}✅ Код обновлен${NC}"
 echo ""
 
 # 2. Проверка/создание базы данных
-echo -e "${YELLOW}[2/5] Проверка базы данных...${NC}"
+echo -e "${YELLOW}[2/8] Проверка базы данных...${NC}"
 sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='eco_client'" | grep -q 1 || {
     echo "Создание базы данных..."
     sudo -u postgres psql << 'EOF'
@@ -41,7 +41,7 @@ EOF
 echo ""
 
 # 3. Запуск миграций
-echo -e "${YELLOW}[3/6] Запуск миграций...${NC}"
+echo -e "${YELLOW}[3/8] Запуск миграций...${NC}"
 cd /opt/eco-project/backend
 php yii migrate --interactive=0 2>&1 | tail -5
 if [ $? -eq 0 ]; then
@@ -51,8 +51,19 @@ else
 fi
 echo ""
 
-# 4. Очистка дубликатов требований
-echo -e "${YELLOW}[4/8] Очистка дубликатов требований...${NC}"
+# 4. Создание демо-пользователя
+echo -e "${YELLOW}[4/8] Создание демо-пользователя...${NC}"
+cd /opt/eco-project/backend
+php yii seed 2>&1 | tail -10
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Демо-пользователь создан${NC}"
+else
+    echo -e "${YELLOW}⚠️  Демо-пользователь может быть уже создан${NC}"
+fi
+echo ""
+
+# 5. Очистка дубликатов требований (ПОСЛЕ seed, чтобы удалить дубликаты созданные seed)
+echo -e "${YELLOW}[5/8] Очистка дубликатов требований...${NC}"
 cd /opt/eco-project/backend
 php -r "
 try {
@@ -119,17 +130,6 @@ try {
     echo '⚠️  Ошибка при очистке дубликатов: ' . \$e->getMessage() . PHP_EOL;
 }
 "
-echo ""
-
-# 5. Создание демо-пользователя
-echo -e "${YELLOW}[5/8] Создание демо-пользователя...${NC}"
-cd /opt/eco-project/backend
-php yii seed 2>&1 | tail -10
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Демо-пользователь создан${NC}"
-else
-    echo -e "${YELLOW}⚠️  Демо-пользователь может быть уже создан${NC}"
-fi
 echo ""
 
 # 6. Генерация рисков для всех требований
