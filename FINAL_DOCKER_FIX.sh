@@ -40,7 +40,18 @@ cat > /etc/docker/daemon.json << 'DOCKER_EOF'
       "base": "172.17.0.0/16",
       "size": 24
     }
-  ]
+  ],
+  "runtimes": {
+    "runc": {
+      "path": "runc",
+      "runtimeArgs": []
+    },
+    "crun": {
+      "path": "/usr/bin/crun",
+      "runtimeArgs": []
+    }
+  },
+  "default-runtime": "runc"
 }
 DOCKER_EOF
 
