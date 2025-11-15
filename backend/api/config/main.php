@@ -72,8 +72,6 @@ return [
                     'controller' => 'requirement',
                     'pluralize' => false,
                     'extraPatterns' => [
-                        'GET {id}/risks' => 'risks',
-                        'OPTIONS {id}/risks' => 'options',
                         'POST recalculate' => 'recalculate',
                         'OPTIONS recalculate' => 'options',
                     ],
