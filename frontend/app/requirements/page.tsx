@@ -275,13 +275,13 @@ function RequirementsPageContent() {
           setClient(updatedClient);
           setCategoryId(updatedClient.category_id || '');
           
-          // КРИТИЧЕСКИ ВАЖНО: ПРИОРИТЕТ отдаем значениям, которые были отправлены в запросе
-          // УПРОЩЕННАЯ ЛОГИКА: Если значение было выбрано пользователем (не пустая строка), используем его
-          // Иначе используем значение из БД (которое должно было сохраниться)
-          // ВАЖНО: false - это валидное значение выбора ("Без водопользования")
-          const newHasWell = hasWell !== '' ? hasWell : (updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : ''));
-          const newHasRiver = hasRiver !== '' ? hasRiver : (updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : ''));
-          const newHasByproduct = hasByproduct !== '' ? hasByproduct : (updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : ''));
+          // КРИТИЧЕСКИ ВАЖНО: ВСЕГДА используем значения из requestData (которые мы отправили)
+          // Это гарантирует, что выбор пользователя НИКОГДА не сбросится
+          // НЕ используем значения из updatedClient, так как они могут быть неправильными
+          // Преобразуем boolean в состояние: true -> true, false -> false
+          const newHasWell = requestData.has_well === true ? true : (requestData.has_well === false ? false : hasWell);
+          const newHasRiver = requestData.has_river === true ? true : (requestData.has_river === false ? false : hasRiver);
+          const newHasByproduct = requestData.has_byproduct === true ? true : (requestData.has_byproduct === false ? false : hasByproduct);
           
           console.log('🔍 Восстановление состояния после пересчета:', {
             'hasWell (было в состоянии)': hasWell,
@@ -290,15 +290,15 @@ function RequirementsPageContent() {
             'requestData.has_well (отправлено)': requestData.has_well,
             'requestData.has_river (отправлено)': requestData.has_river,
             'requestData.has_byproduct (отправлено)': requestData.has_byproduct,
-            'updatedClient.has_well (из БД)': updatedClient.has_well,
-            'updatedClient.has_river (из БД)': updatedClient.has_river,
-            'updatedClient.has_byproduct (из БД)': updatedClient.has_byproduct,
-            'newHasWell (будет установлено)': newHasWell,
-            'newHasRiver (будет установлено)': newHasRiver,
-            'newHasByproduct (будет установлено)': newHasByproduct,
+            'updatedClient.has_well (из БД, НЕ используем)': updatedClient.has_well,
+            'updatedClient.has_river (из БД, НЕ используем)': updatedClient.has_river,
+            'updatedClient.has_byproduct (из БД, НЕ используем)': updatedClient.has_byproduct,
+            'newHasWell (будет установлено из requestData)': newHasWell,
+            'newHasRiver (будет установлено из requestData)': newHasRiver,
+            'newHasByproduct (будет установлено из requestData)': newHasByproduct,
           });
           
-          // ВАЖНО: Устанавливаем значения напрямую, без дополнительных проверок
+          // ВАЖНО: Устанавливаем значения из requestData, которые мы отправили
           setHasWell(newHasWell);
           setHasRiver(newHasRiver);
           setHasByproduct(newHasByproduct);
@@ -306,9 +306,9 @@ function RequirementsPageContent() {
         } else {
           // Если клиент не вернулся в ответе, используем значения из requestData (которые мы отправили)
           console.log('⚠️ Клиент не вернулся в ответе, используем requestData:', requestData);
-          setHasWell(requestData.has_well === true ? true : (requestData.has_well === false ? false : ''));
-          setHasRiver(requestData.has_river === true ? true : (requestData.has_river === false ? false : ''));
-          setHasByproduct(requestData.has_byproduct === true ? true : (requestData.has_byproduct === false ? false : ''));
+          setHasWell(requestData.has_well === true ? true : (requestData.has_well === false ? false : hasWell));
+          setHasRiver(requestData.has_river === true ? true : (requestData.has_river === false ? false : hasRiver));
+          setHasByproduct(requestData.has_byproduct === true ? true : (requestData.has_byproduct === false ? false : hasByproduct));
         }
         
         // Перезагружаем требования сразу с принудительным обновлением
