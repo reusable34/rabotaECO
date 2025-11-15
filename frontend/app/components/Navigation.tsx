@@ -29,8 +29,9 @@ export default function Navigation() {
     }
   };
 
-  // Не показываем навигацию на странице входа и регистрации
-  if (pathname === '/login' || pathname === '/register') {
+  // Не показываем навигацию на странице входа, регистрации и админ-панели
+  // (админ-панель имеет свой собственный header)
+  if (pathname === '/login' || pathname === '/register' || pathname === '/admin') {
     return null;
   }
 
