@@ -223,9 +223,29 @@ function RequirementsPageContent() {
         });
       }
       
-      // Если есть client_id, передаем его (для админа)
-      if (client.id) {
-        requestData.client_id = client.id;
+      // КРИТИЧЕСКИ ВАЖНО: Всегда передаем client_id, особенно для админа
+      // Если client_id не передан, используем client.id или client_id из URL
+      if (!requestData.client_id) {
+        if (client?.id) {
+          requestData.client_id = client.id;
+        } else {
+          const clientIdFromUrl = searchParams?.get('client_id');
+          if (clientIdFromUrl) {
+            requestData.client_id = parseInt(clientIdFromUrl, 10);
+          }
+        }
+      }
+      
+      // Для админа client_id обязателен
+      if (currentUser?.role === 'admin' && !requestData.client_id) {
+        console.error('❌ ОШИБКА: client_id не указан для админа при пересчете');
+        alert('Ошибка: не указан клиент для пересчета. Пожалуйста, выберите клиента.');
+        setRecalculating(false);
+        return;
+      }
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Пересчет требований: передаваемый client_id:', requestData.client_id);
       }
       
       const response = await api.post('/requirement/recalculate', requestData);

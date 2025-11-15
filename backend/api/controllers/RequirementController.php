@@ -287,9 +287,15 @@ class RequirementController extends ActiveController
             // Админ может пересчитывать для любого клиента
             $clientId = $request->post('client_id');
             if (!$clientId) {
+                Yii::error("CRITICAL: Admin tried to recalculate without client_id");
                 throw new \yii\web\BadRequestHttpException('client_id is required for admin');
             }
             $client = Client::findOne($clientId);
+            if (!$client) {
+                Yii::error("CRITICAL: Admin tried to recalculate for non-existent client_id={$clientId}");
+                throw new \yii\web\NotFoundHttpException("Client with id={$clientId} not found");
+            }
+            Yii::info("=== RECALCULATE: Admin recalculating for client_id={$clientId}, client_name={$client->name} ===");
         } else {
             // Менеджер может пересчитывать только для своих клиентов
             $clientId = $request->post('client_id');
@@ -355,7 +361,13 @@ class RequirementController extends ActiveController
             // Используем прямой SQL запрос для гарантированного удаления
             $clientId = $client->id;
             
-            Yii::info("=== RECALCULATE: Starting for client_id={$clientId}, category_id={$client->category_id} ===");
+            // КРИТИЧЕСКАЯ ПРОВЕРКА: Убеждаемся, что client_id правильный
+            Yii::info("=== RECALCULATE: Starting for client_id={$clientId}, category_id={$client->category_id}, client_name={$client->name} ===");
+            Yii::info("=== RECALCULATE: User role={$user->role}, user_id={$user->id} ===");
+            
+            // Проверяем, сколько требований существует ДО удаления
+            $beforeDeleteCount = Requirement::find()->where(['client_id' => $clientId])->count();
+            Yii::info("=== RECALCULATE: Found {$beforeDeleteCount} existing requirements for client_id={$clientId} BEFORE deletion ===");
             
             // Сначала удаляем все риски для требований этого клиента
             $riskDeleteQuery = "DELETE FROM risks WHERE requirement_id IN (SELECT id FROM requirements WHERE client_id = :client_id)";
