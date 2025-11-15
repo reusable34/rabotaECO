@@ -341,9 +341,29 @@ export default function AdminPage() {
       }
       
       if (selectedUser) {
-        // Используем PUT вместо PATCH для надежности
-        const response = await api.put(`/user/${selectedUser.id}`, userData);
-        alert('Пользователь успешно обновлен!');
+        // Пробуем разные методы для надежности
+        try {
+          const response = await api.put(`/user/${selectedUser.id}`, userData);
+          alert('Пользователь успешно обновлен!');
+        } catch (putError: any) {
+          // Если PUT не работает, пробуем PATCH
+          if (putError.response?.status === 404) {
+            try {
+              const response = await api.patch(`/user/${selectedUser.id}`, userData);
+              alert('Пользователь успешно обновлен!');
+            } catch (patchError: any) {
+              // Если и PATCH не работает, пробуем POST
+              if (patchError.response?.status === 404) {
+                const response = await api.post(`/user/${selectedUser.id}/update`, userData);
+                alert('Пользователь успешно обновлен!');
+              } else {
+                throw patchError;
+              }
+            }
+          } else {
+            throw putError;
+          }
+        }
       } else {
         const response = await api.post('/user', userData);
         alert('Пользователь успешно создан!');

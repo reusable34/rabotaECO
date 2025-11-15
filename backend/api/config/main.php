@@ -117,16 +117,22 @@ return [
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'user',
+                    'pluralize' => false,
                     'extraPatterns' => [
                         'POST create' => 'create',
                         'PATCH {id}' => 'update',
                         'PUT {id}' => 'update',
+                        'POST {id}' => 'update', // Добавляем POST для надежности
                         'DELETE {id}' => 'delete',
                     ],
                     'tokens' => [
                         '{id}' => '<id:\\d+>',
                     ],
                 ],
+                // Явный маршрут для обновления пользователя (на случай проблем с REST)
+                'PUT user/<id:\d+>' => 'user/update',
+                'PATCH user/<id:\d+>' => 'user/update',
+                'POST user/<id:\d+>/update' => 'user/update',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'npa',

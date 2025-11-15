@@ -144,11 +144,17 @@ class UserController extends ActiveController
             throw new \yii\web\NotFoundHttpException('User not found');
         }
 
-        // Получаем данные из запроса
+        // Получаем данные из запроса - пробуем все способы
         $data = Yii::$app->request->getBodyParams();
         if (empty($data)) {
             $data = Yii::$app->request->post();
         }
+        if (empty($data)) {
+            $data = Yii::$app->request->get();
+        }
+        
+        // Логирование для отладки
+        Yii::info("UserController::actionUpdate - ID: {$id}, Method: " . Yii::$app->request->method . ", Data: " . json_encode($data), 'application');
         
         // Простая логика: обновляем только переданные поля
         if (isset($data['name'])) {
