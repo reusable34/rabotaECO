@@ -59,11 +59,11 @@ echo ""
 
 # 4. Перезапуск Next.js
 echo -e "${YELLOW}[4/6] Перезапуск Next.js...${NC}"
-systemctl start nextjs
+systemctl restart nextjs
 sleep 5
 
 if systemctl is-active --quiet nextjs; then
-    echo -e "${GREEN}✅ Next.js запущен${NC}"
+    echo -e "${GREEN}✅ Next.js перезапущен${NC}"
 else
     echo -e "${RED}❌ Next.js не запустился${NC}"
     journalctl -u nextjs -n 30 --no-pager
