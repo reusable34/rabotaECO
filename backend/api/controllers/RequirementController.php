@@ -332,20 +332,37 @@ class RequirementController extends ActiveController
         // Проверяем наличие ключа в POST данных, а не значение (так как false - это валидное значение)
         $postData = $request->post();
         
+        // Логируем входящие данные для отладки
+        Yii::info("=== RECALCULATE: POST data received ===");
+        Yii::info("POST has_well: " . var_export($postData['has_well'] ?? 'NOT SET', true));
+        Yii::info("POST has_river: " . var_export($postData['has_river'] ?? 'NOT SET', true));
+        Yii::info("POST has_byproduct: " . var_export($postData['has_byproduct'] ?? 'NOT SET', true));
+        Yii::info("Client BEFORE update: has_well=" . var_export($client->has_well, true) . ", has_river=" . var_export($client->has_river, true) . ", has_byproduct=" . var_export($client->has_byproduct, true));
+        
+        // ВСЕГДА обновляем значения, если они переданы в запросе
+        // Используем array_key_exists для проверки наличия ключа (даже если значение false)
         if (array_key_exists('has_well', $postData)) {
             $hasWellParam = $postData['has_well'];
+            $oldValue = $client->has_well;
             $client->has_well = ($hasWellParam === true || $hasWellParam === 'true' || $hasWellParam === 1 || $hasWellParam === '1') ? true : false;
+            Yii::info("Updated has_well: {$oldValue} -> " . var_export($client->has_well, true) . " (from param: " . var_export($hasWellParam, true) . ")");
         }
         
         if (array_key_exists('has_river', $postData)) {
             $hasRiverParam = $postData['has_river'];
+            $oldValue = $client->has_river;
             $client->has_river = ($hasRiverParam === true || $hasRiverParam === 'true' || $hasRiverParam === 1 || $hasRiverParam === '1') ? true : false;
+            Yii::info("Updated has_river: {$oldValue} -> " . var_export($client->has_river, true) . " (from param: " . var_export($hasRiverParam, true) . ")");
         }
         
         if (array_key_exists('has_byproduct', $postData)) {
             $hasByproductParam = $postData['has_byproduct'];
+            $oldValue = $client->has_byproduct;
             $client->has_byproduct = ($hasByproductParam === true || $hasByproductParam === 'true' || $hasByproductParam === 1 || $hasByproductParam === '1') ? true : false;
+            Yii::info("Updated has_byproduct: {$oldValue} -> " . var_export($client->has_byproduct, true) . " (from param: " . var_export($hasByproductParam, true) . ")");
         }
+        
+        Yii::info("Client AFTER update (before save): has_well=" . var_export($client->has_well, true) . ", has_river=" . var_export($client->has_river, true) . ", has_byproduct=" . var_export($client->has_byproduct, true));
         
         if ($responsiblePerson !== null) {
             $client->responsible_person = $responsiblePerson;

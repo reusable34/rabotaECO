@@ -209,31 +209,35 @@ function RequirementsPageContent() {
       // Если значение не было изменено (пустая строка), используем значение из клиента, но явно преобразуем в boolean
       // КРИТИЧЕСКИ ВАЖНО: Всегда передаем явные значения, даже если они false
       // Это гарантирует, что выбор пользователя (включая "Без водопользования") сохранится
+      // Определяем значения: если явно выбрано (не пустая строка), используем выбор, иначе используем значение из клиента
+      const finalHasWell = hasWell !== '' ? (hasWell === true) : (client.has_well === true ? true : false);
+      const finalHasRiver = hasRiver !== '' ? (hasRiver === true) : (client.has_river === true ? true : false);
+      const finalHasByproduct = hasByproduct !== '' ? (hasByproduct === true) : (client.has_byproduct === true ? true : false);
+      
       const requestData: any = {
         category_id: categoryId || client.category_id,
-        // Если значение явно выбрано (не пустая строка), используем его
-        // Если не выбрано (пустая строка), используем значение из клиента, но явно преобразуем в boolean
-        has_well: hasWell === '' ? (client.has_well === true ? true : false) : (hasWell === true),
-        has_river: hasRiver === '' ? (client.has_river === true ? true : false) : (hasRiver === true),
-        has_byproduct: hasByproduct === '' ? (client.has_byproduct === true ? true : false) : (hasByproduct === true),
+        has_well: finalHasWell,
+        has_river: finalHasRiver,
+        has_byproduct: finalHasByproduct,
         responsible_person: responsiblePerson || client.responsible_person || '',
       };
       
-      const isDev = process.env.NODE_ENV === 'development';
-      if (isDev) {
-        console.log('Пересчет требований с параметрами:', {
-          category_id: requestData.category_id,
-          has_well: requestData.has_well,
-          has_river: requestData.has_river,
-          has_byproduct: requestData.has_byproduct,
-          'hasWell state': hasWell,
-          'hasRiver state': hasRiver,
-          'hasByproduct state': hasByproduct,
-          'client.has_well': client.has_well,
-          'client.has_river': client.has_river,
-          'client.has_byproduct': client.has_byproduct,
-        });
-      }
+      // Логирование для отладки (всегда, не только в dev)
+      console.log('🔍 Пересчет требований - отправляемые параметры:', {
+        category_id: requestData.category_id,
+        has_well: requestData.has_well,
+        has_river: requestData.has_river,
+        has_byproduct: requestData.has_byproduct,
+        'hasWell state (raw)': hasWell,
+        'hasRiver state (raw)': hasRiver,
+        'hasByproduct state (raw)': hasByproduct,
+        'client.has_well': client.has_well,
+        'client.has_river': client.has_river,
+        'client.has_byproduct': client.has_byproduct,
+        'finalHasWell': finalHasWell,
+        'finalHasRiver': finalHasRiver,
+        'finalHasByproduct': finalHasByproduct,
+      });
       
       // КРИТИЧЕСКИ ВАЖНО: Всегда передаем client_id, особенно для админа
       // Если client_id не передан, используем client.id или client_id из URL
@@ -268,17 +272,34 @@ function RequirementsPageContent() {
           const updatedClient = response.data.client;
           setClient(updatedClient);
           setCategoryId(updatedClient.category_id || '');
-          // КРИТИЧЕСКИ ВАЖНО: Сохраняем значения из БД, но приоритет отдаем значениям, которые были отправлены в запросе
-          // Это гарантирует, что выбор пользователя не сбросится
-          // Если пользователь явно выбрал значение (не пустая строка), используем его, иначе используем значение из БД
-          // Важно: false - это валидное значение выбора ("Без водопользования"), поэтому проверяем !== '' а не truthy
-          setHasWell(hasWell !== '' ? hasWell : (updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : '')));
-          setHasRiver(hasRiver !== '' ? hasRiver : (updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : '')));
-          setHasByproduct(hasByproduct !== '' ? hasByproduct : (updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : '')));
+          
+          // КРИТИЧЕСКИ ВАЖНО: Используем значения из БД (которые были сохранены)
+          // Но если пользователь явно выбрал значение (не пустая строка), сохраняем его выбор
+          // Это гарантирует, что выбор пользователя не сбросится, даже если в БД что-то не так
+          const newHasWell = hasWell !== '' ? hasWell : (updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : ''));
+          const newHasRiver = hasRiver !== '' ? hasRiver : (updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : ''));
+          const newHasByproduct = hasByproduct !== '' ? hasByproduct : (updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : ''));
+          
+          console.log('🔍 Восстановление состояния после пересчета:', {
+            'hasWell (было)': hasWell,
+            'hasRiver (было)': hasRiver,
+            'hasByproduct (было)': hasByproduct,
+            'updatedClient.has_well': updatedClient.has_well,
+            'updatedClient.has_river': updatedClient.has_river,
+            'updatedClient.has_byproduct': updatedClient.has_byproduct,
+            'newHasWell': newHasWell,
+            'newHasRiver': newHasRiver,
+            'newHasByproduct': newHasByproduct,
+          });
+          
+          setHasWell(newHasWell);
+          setHasRiver(newHasRiver);
+          setHasByproduct(newHasByproduct);
           setResponsiblePerson(updatedClient.responsible_person || '');
         } else {
           // Если клиент не вернулся в ответе, обновляем состояния из requestData, чтобы сохранить выбор пользователя
           // Важно: сохраняем false как false, а не преобразуем в пустую строку
+          console.log('⚠️ Клиент не вернулся в ответе, используем requestData:', requestData);
           setHasWell(requestData.has_well === true ? true : (requestData.has_well === false ? false : ''));
           setHasRiver(requestData.has_river === true ? true : (requestData.has_river === false ? false : ''));
           setHasByproduct(requestData.has_byproduct === true ? true : (requestData.has_byproduct === false ? false : ''));
