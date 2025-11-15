@@ -334,12 +334,22 @@ if [ -n "$FIRST_REQ_ID" ]; then
 fi
 
 print_test "Пересчет требований"
-recalc_data="{\"client_id\":$NEW_CLIENT_ID,\"category_id\":2,\"has_well\":true,\"has_river\":true,\"has_byproduct\":true}"
-response=$(api_request "POST" "/requirement/recalculate" "$recalc_data" "$ADMIN_TOKEN")
-if check_status "$response" "200"; then
-    print_pass "Пересчет требований выполнен"
+# Используем существующий client_id (TEST_CLIENT_ID или NEW_CLIENT_ID)
+RECALC_CLIENT_ID="${NEW_CLIENT_ID:-$TEST_CLIENT_ID}"
+if [ -n "$RECALC_CLIENT_ID" ]; then
+    # Используем правильный формат для булевых значений (true/false как строки в JSON)
+    recalc_data="{\"client_id\":$RECALC_CLIENT_ID,\"category_id\":2,\"has_well\":true,\"has_river\":true,\"has_byproduct\":true}"
+    response=$(api_request "POST" "/requirement/recalculate" "$recalc_data" "$ADMIN_TOKEN")
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | sed '$d')
+    if check_status "$response" "200"; then
+        print_pass "Пересчет требований выполнен"
+    else
+        print_warn "Пересчет требований вернул HTTP $http_code"
+        echo "Ответ: $body" | head -c 200
+    fi
 else
-    print_warn "Пересчет требований вернул HTTP $(echo "$response" | tail -n1)"
+    print_warn "Пересчет требований пропущен (нет доступного client_id)"
 fi
 
 # ==========================================
@@ -442,16 +452,18 @@ fi
 # ==========================================
 print_header "9. ПРОВЕРКА ЧЕРЕЗ NGINX ПРОКСИ"
 
-if [ -n "$NGINX_URL" ] && [ "$NGINX_URL" != "http://localhost:3384" ]; then
-    print_test "Health check через Nginx"
-    response=$(curl -s -w "\n%{http_code}" "$NGINX_URL/api/health" 2>/dev/null)
-    if check_status "$response" "200"; then
+print_test "Health check через Nginx"
+# Проверяем доступность Nginx, пытаясь подключиться к нему
+nginx_response=$(curl -s -w "\n%{http_code}" --max-time 5 "$NGINX_URL/api/health" 2>/dev/null)
+if [ $? -eq 0 ]; then
+    if check_status "$nginx_response" "200"; then
         print_pass "Nginx прокси работает"
     else
-        print_warn "Nginx прокси вернул HTTP $(echo "$response" | tail -n1)"
+        http_code=$(echo "$nginx_response" | tail -n1)
+        print_warn "Nginx прокси вернул HTTP $http_code"
     fi
 else
-    print_warn "Проверка через Nginx пропущена (NGINX_URL не настроен)"
+    print_warn "Nginx прокси недоступен (проверьте, что Nginx запущен на $NGINX_URL)"
 fi
 
 # ==========================================
