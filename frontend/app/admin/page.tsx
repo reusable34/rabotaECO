@@ -68,6 +68,30 @@ export default function AdminPage() {
     loadData();
   }, []);
 
+  // Перезагружаем требования при изменении фильтра клиента
+  useEffect(() => {
+    if (activeTab === 'requirements') {
+      loadRequirements();
+    }
+  }, [filterClientId, activeTab]);
+
+  const loadRequirements = async () => {
+    try {
+      const requirementUrl = filterClientId 
+        ? `/requirement?client_id=${filterClientId}`
+        : '/requirement';
+      
+      const requirementsRes = await api.get(requirementUrl);
+      const reqs = Array.isArray(requirementsRes.data) 
+        ? requirementsRes.data 
+        : (requirementsRes.data?.items || []);
+      setRequirements(reqs);
+    } catch (error) {
+      console.error('Error loading requirements:', error);
+      setRequirements([]);
+    }
+  };
+
   const checkAccess = async () => {
     try {
       const res = await api.get('/auth/me');
@@ -83,9 +107,15 @@ export default function AdminPage() {
 
   const loadData = async () => {
     try {
+      // КРИТИЧЕСКИ ВАЖНО: Если выбран клиент, загружаем требования только для него
+      // Иначе загружаем все требования (для админа)
+      const requirementUrl = filterClientId 
+        ? `/requirement?client_id=${filterClientId}`
+        : '/requirement';
+      
       const [clientsRes, requirementsRes, categoriesRes, usersRes, npaRes] = await Promise.all([
         api.get('/client'),
-        api.get('/requirement'),
+        api.get(requirementUrl),
         api.get('/category'),
         api.get('/user').catch(() => ({ data: [] })),
         api.get('/npa').catch(() => ({ data: [] })),

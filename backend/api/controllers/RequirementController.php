@@ -103,9 +103,9 @@ class RequirementController extends ActiveController
                     $query->where(['client_id' => (int)$filterClientId]);
                     Yii::info("API: Admin requesting requirements for client_id={$filterClientId} (FILTERED)");
                 } else {
-                    // Если client_id не указан, возвращаем пустой список (админ должен выбрать клиента)
-                    Yii::warning("API: Admin requesting requirements without client_id - returning empty list");
-                    $query->where('1=0'); // Пустой результат
+                    // Если client_id не указан, возвращаем ВСЕ требования для админа
+                    // (админ-панель может показывать все требования или фильтровать на фронтенде)
+                    Yii::info("API: Admin requesting all requirements (no client_id filter)");
                 }
                 $count = $query->count();
                 Yii::info("API: Admin requesting requirements" . ($filterClientId ? " for client_id={$filterClientId}" : " (NO CLIENT_ID)") . ", found: {$count}");
