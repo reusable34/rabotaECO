@@ -20,9 +20,7 @@ services:
       - eco_network
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: php:8.2-apache
     container_name: eco_backend
     privileged: true
     ports:
@@ -40,6 +38,18 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-eco_pass}
       JWT_SECRET: ${JWT_SECRET:-supersecretkey}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8080}
+    command: >
+      bash -c "
+      apt-get update -qq &&
+      apt-get install -y -qq libpq-dev libzip-dev unzip git curl wget &&
+      docker-php-ext-install pdo pdo_pgsql zip &&
+      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer &&
+      cd /var/www/html &&
+      composer install --no-dev --optimize-autoloader --no-interaction --quiet &&
+      chmod -R 777 storage runtime &&
+      a2enmod rewrite &&
+      apache2-foreground
+      "
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1"]
       interval: 30s
@@ -50,9 +60,7 @@ services:
       - eco_network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: node:20-alpine
     container_name: eco_frontend
     privileged: true
     ports:
@@ -61,9 +69,16 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
+    working_dir: /app
     environment:
       NEXT_PUBLIC_API_URL: ${BACKEND_URL:-http://localhost:8080}
       NEXT_PUBLIC_ENV: ${ENV:-production}
+    command: >
+      sh -c "
+      npm install &&
+      npm run build &&
+      npm start
+      "
     depends_on:
       backend:
         condition: service_started
