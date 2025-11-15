@@ -77,14 +77,24 @@ export default function AdminPage() {
 
   const loadRequirements = async () => {
     try {
-      const requirementUrl = filterClientId 
-        ? `/requirement?client_id=${filterClientId}`
-        : '/requirement';
+      // КРИТИЧЕСКИ ВАЖНО: Если выбран клиент, загружаем ТОЛЬКО его требования
+      // Если клиент не выбран, показываем пустой список (админ должен выбрать клиента)
+      if (!filterClientId) {
+        setRequirements([]);
+        return;
+      }
+      
+      const requirementUrl = `/requirement?client_id=${filterClientId}`;
       
       const requirementsRes = await api.get(requirementUrl);
-      const reqs = Array.isArray(requirementsRes.data) 
+      let reqs = Array.isArray(requirementsRes.data) 
         ? requirementsRes.data 
         : (requirementsRes.data?.items || []);
+      
+      // ДОПОЛНИТЕЛЬНАЯ ФИЛЬТРАЦИЯ: Убеждаемся, что показываем только требования выбранного клиента
+      const clientIdNum = parseInt(filterClientId, 10);
+      reqs = reqs.filter((req: Requirement) => req.client_id === clientIdNum);
+      
       setRequirements(reqs);
     } catch (error) {
       console.error('Error loading requirements:', error);
@@ -172,7 +182,8 @@ export default function AdminPage() {
       }
       setShowRequirementForm(false);
       setSelectedRequirement(null);
-      await loadData();
+      // Перезагружаем требования для выбранного клиента
+      await loadRequirements();
     } catch (error: any) {
       alert(error.response?.data?.message || 'Ошибка при сохранении требования');
     }
@@ -184,7 +195,8 @@ export default function AdminPage() {
     try {
       await api.delete(`/requirement/${req.id}`);
       alert('Требование удалено!');
-      await loadData();
+      // Перезагружаем требования для выбранного клиента
+      await loadRequirements();
     } catch (error: any) {
       alert(error.response?.data?.message || 'Ошибка при удалении требования');
     }
@@ -804,11 +816,46 @@ export default function AdminPage() {
                   onChange={(e) => setFilterClientId(e.target.value)}
                   className={styles.filterSelect}
                 >
-                  <option value="">Все клиенты</option>
+                  <option value="">Выберите клиента</option>
                   {clients.map((client: Client) => (
                     <option key={client.id} value={client.id.toString()}>{client.name}</option>
                   ))}
                 </select>
+                {filterClientId && (
+                  <button
+                    onClick={async () => {
+                      if (!confirm('Пересчитать требования для этого клиента? Все текущие требования будут удалены и созданы заново.')) {
+                        return;
+                      }
+                      try {
+                        const client = clients.find((c: Client) => c.id.toString() === filterClientId);
+                        if (!client) return;
+                        
+                        const response = await api.post('/requirement/recalculate', {
+                          client_id: client.id,
+                          category_id: client.category_id,
+                          has_well: client.has_well || false,
+                          has_river: client.has_river || false,
+                          has_byproduct: client.has_byproduct || false,
+                          responsible_person: client.responsible_person || '',
+                        });
+                        
+                        if (response.data.success) {
+                          alert(`Требования успешно пересчитаны! Создано требований: ${response.data.count || 0}`);
+                          await loadRequirements();
+                        } else {
+                          alert('Ошибка при пересчете требований');
+                        }
+                      } catch (error: any) {
+                        alert(error.response?.data?.message || 'Ошибка при пересчете требований');
+                      }
+                    }}
+                    className={styles.recalculateButton}
+                    style={{ marginRight: '10px', backgroundColor: '#28a745', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    🔄 Пересчитать требования
+                  </button>
+                )}
                 <button 
                   onClick={() => {
                     setSelectedRequirement(null);
@@ -850,9 +897,7 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {requirements
-                        .filter((req: Requirement) => !filterClientId || req.client_id.toString() === filterClientId)
-                        .map((req) => (
+                      {requirements.map((req) => (
                         <tr key={req.id}>
                           <td className={styles.idCell}>{req.id}</td>
                           <td className={styles.titleCell}>{req.title}</td>
