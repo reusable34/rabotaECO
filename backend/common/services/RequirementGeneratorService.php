@@ -25,6 +25,20 @@ class RequirementGeneratorService
         
         Yii::info("RequirementGeneratorService::generateRequirements: client_id={$client->id}, category_id={$categoryId}, has_well=" . ($client->has_well ? 'true' : 'false') . ", has_river=" . ($client->has_river ? 'true' : 'false') . ", has_byproduct=" . ($client->has_byproduct ? 'true' : 'false'));
 
+        // 0. Удаляем существующие требования для этого клиента (если есть)
+        // Это важно, чтобы избежать дубликатов при повторной генерации
+        $existingCount = Requirement::find()->where(['client_id' => $client->id])->count();
+        if ($existingCount > 0) {
+            Yii::info("Found {$existingCount} existing requirements for client_id={$client->id}, deleting them before generating new ones");
+            // Сначала удаляем связанные риски
+            $riskDeleteQuery = "DELETE FROM risks WHERE requirement_id IN (SELECT id FROM requirements WHERE client_id = :client_id)";
+            $riskDeleted = Yii::$app->db->createCommand($riskDeleteQuery, [':client_id' => $client->id])->execute();
+            Yii::info("Deleted {$riskDeleted} risks for client_id={$client->id}");
+            // Затем удаляем требования
+            $deletedCount = Requirement::deleteAll(['client_id' => $client->id]);
+            Yii::info("Deleted {$deletedCount} existing requirements for client_id={$client->id}");
+        }
+
         // 1. Получаем базовые требования по категории НВОС
         $baseRequirements = self::getBaseRequirementsForCategory($categoryId);
         Yii::info("Got " . count($baseRequirements) . " base requirements for category_id={$categoryId}");
@@ -46,32 +60,53 @@ class RequirementGeneratorService
             Yii::info("=== Total: " . count($allRequirements) . " requirements ===");
         }
         
-        foreach ($allRequirements as $reqData) {
-            $requirement = new Requirement();
-            $requirement->client_id = $client->id;
-            $requirement->title = $reqData['title'];
-            $requirement->basis = $reqData['basis'] ?? null;
-            $requirement->setArtifactsArray($reqData['artifacts'] ?? []);
-            $requirement->document_year = $reqData['document_year'] ?? date('Y');
-            $requirement->deadline = $reqData['deadline'] ?? null;
-            $requirement->status = Requirement::STATUS_PENDING;
-            
-            if ($requirement->save()) {
-                $createdRequirements[] = $requirement;
-                Yii::info("SUCCESS: Created requirement ID {$requirement->id}: {$reqData['title']}");
+        // Используем транзакцию для атомарности операции
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            foreach ($allRequirements as $reqData) {
+                // Проверяем, не существует ли уже такое требование (на случай параллельных запросов)
+                $existing = Requirement::findOne([
+                    'client_id' => $client->id,
+                    'title' => $reqData['title']
+                ]);
                 
-                // Автоматически создаем риски на основе статей КоАП из basis
-                self::createRisksForRequirement($requirement, $reqData['basis'] ?? null);
-            } else {
-                Yii::error("FAILED: Could not save requirement '{$reqData['title']}': " . json_encode($requirement->errors));
-                Yii::error("Requirement data: " . json_encode([
-                    'title' => $reqData['title'],
-                    'basis' => $reqData['basis'],
-                    'artifacts_count' => count($reqData['artifacts'] ?? []),
-                    'document_year' => $reqData['document_year'],
-                    'deadline' => $reqData['deadline'],
-                ]));
+                if ($existing) {
+                    Yii::warning("Requirement '{$reqData['title']}' already exists for client_id={$client->id}, skipping");
+                    continue;
+                }
+                
+                $requirement = new Requirement();
+                $requirement->client_id = $client->id;
+                $requirement->title = $reqData['title'];
+                $requirement->basis = $reqData['basis'] ?? null;
+                $requirement->setArtifactsArray($reqData['artifacts'] ?? []);
+                $requirement->document_year = $reqData['document_year'] ?? date('Y');
+                $requirement->deadline = $reqData['deadline'] ?? null;
+                $requirement->status = Requirement::STATUS_PENDING;
+                
+                if ($requirement->save()) {
+                    $createdRequirements[] = $requirement;
+                    Yii::info("SUCCESS: Created requirement ID {$requirement->id}: {$reqData['title']}");
+                    
+                    // Автоматически создаем риски на основе статей КоАП из basis
+                    self::createRisksForRequirement($requirement, $reqData['basis'] ?? null);
+                } else {
+                    Yii::error("FAILED: Could not save requirement '{$reqData['title']}': " . json_encode($requirement->errors));
+                    Yii::error("Requirement data: " . json_encode([
+                        'title' => $reqData['title'],
+                        'basis' => $reqData['basis'],
+                        'artifacts_count' => count($reqData['artifacts'] ?? []),
+                        'document_year' => $reqData['document_year'],
+                        'deadline' => $reqData['deadline'],
+                    ]));
+                }
             }
+            
+            $transaction->commit();
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::error("Error generating requirements for client_id={$client->id}: " . $e->getMessage());
+            throw $e;
         }
         
         // Финальная проверка для всех категорий
