@@ -199,10 +199,11 @@ function RequirementsPageContent() {
       // Если значение не было изменено (пустая строка), используем значение из клиента, но явно преобразуем в boolean
       const requestData: any = {
         category_id: categoryId || client.category_id,
-        // Всегда передаем явные boolean значения
-        has_well: hasWell === '' ? Boolean(client.has_well || false) : Boolean(hasWell),
-        has_river: hasRiver === '' ? Boolean(client.has_river || false) : Boolean(hasRiver),
-        has_byproduct: hasByproduct === '' ? Boolean(client.has_byproduct || false) : Boolean(hasByproduct),
+        // КРИТИЧЕСКИ ВАЖНО: Если значение не выбрано (пустая строка), передаем false
+        // НЕ используем значение из клиента, чтобы гарантировать правильную генерацию требований
+        has_well: hasWell === '' ? false : Boolean(hasWell),
+        has_river: hasRiver === '' ? false : Boolean(hasRiver),
+        has_byproduct: hasByproduct === '' ? false : Boolean(hasByproduct),
         responsible_person: responsiblePerson || client.responsible_person || '',
       };
       
