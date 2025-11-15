@@ -204,6 +204,12 @@ function RequirementsPageContent() {
 
     setRecalculating(true);
     try {
+      // КРИТИЧЕСКИ ВАЖНО: Сохраняем текущие значения ДО отправки запроса
+      // Это гарантирует, что мы сможем восстановить их после пересчета
+      const savedHasWell = hasWell;
+      const savedHasRiver = hasRiver;
+      const savedHasByproduct = hasByproduct;
+      
       // Для клиента передаем client_id, чтобы избежать ошибки
       // Явно передаем булевы значения - всегда используем актуальные значения из состояния
       // Если значение не было изменено (пустая строка), используем значение из клиента, но явно преобразуем в boolean
@@ -272,44 +278,31 @@ function RequirementsPageContent() {
         // Обновляем данные клиента из ответа
         if (response.data.client) {
           const updatedClient = response.data.client;
+          // Обновляем клиента, но НЕ трогаем водопользование - оно будет восстановлено отдельно
           setClient(updatedClient);
           setCategoryId(updatedClient.category_id || '');
-          
-          // КРИТИЧЕСКИ ВАЖНО: ВСЕГДА используем значения из requestData (которые мы отправили)
-          // Это гарантирует, что выбор пользователя НИКОГДА не сбросится
-          // НЕ используем значения из updatedClient, так как они могут быть неправильными
-          // Преобразуем boolean в состояние: true -> true, false -> false
-          const newHasWell = requestData.has_well === true ? true : (requestData.has_well === false ? false : hasWell);
-          const newHasRiver = requestData.has_river === true ? true : (requestData.has_river === false ? false : hasRiver);
-          const newHasByproduct = requestData.has_byproduct === true ? true : (requestData.has_byproduct === false ? false : hasByproduct);
-          
-          console.log('🔍 Восстановление состояния после пересчета:', {
-            'hasWell (было в состоянии)': hasWell,
-            'hasRiver (было в состоянии)': hasRiver,
-            'hasByproduct (было в состоянии)': hasByproduct,
-            'requestData.has_well (отправлено)': requestData.has_well,
-            'requestData.has_river (отправлено)': requestData.has_river,
-            'requestData.has_byproduct (отправлено)': requestData.has_byproduct,
-            'updatedClient.has_well (из БД, НЕ используем)': updatedClient.has_well,
-            'updatedClient.has_river (из БД, НЕ используем)': updatedClient.has_river,
-            'updatedClient.has_byproduct (из БД, НЕ используем)': updatedClient.has_byproduct,
-            'newHasWell (будет установлено из requestData)': newHasWell,
-            'newHasRiver (будет установлено из requestData)': newHasRiver,
-            'newHasByproduct (будет установлено из requestData)': newHasByproduct,
-          });
-          
-          // ВАЖНО: Устанавливаем значения из requestData, которые мы отправили
-          setHasWell(newHasWell);
-          setHasRiver(newHasRiver);
-          setHasByproduct(newHasByproduct);
           setResponsiblePerson(updatedClient.responsible_person || '');
-        } else {
-          // Если клиент не вернулся в ответе, используем значения из requestData (которые мы отправили)
-          console.log('⚠️ Клиент не вернулся в ответе, используем requestData:', requestData);
-          setHasWell(requestData.has_well === true ? true : (requestData.has_well === false ? false : hasWell));
-          setHasRiver(requestData.has_river === true ? true : (requestData.has_river === false ? false : hasRiver));
-          setHasByproduct(requestData.has_byproduct === true ? true : (requestData.has_byproduct === false ? false : hasByproduct));
         }
+        
+        // КРИТИЧЕСКИ ВАЖНО: ВСЕГДА восстанавливаем значения из сохраненных ДО отправки запроса
+        // Это гарантирует, что выбор пользователя НИКОГДА не сбросится
+        // Используем сохраненные значения (savedHasWell, savedHasRiver, savedHasByproduct)
+        // которые были сохранены ДО отправки запроса
+        console.log('🔍 Восстановление состояния после пересчета:', {
+          'savedHasWell (сохранено ДО запроса)': savedHasWell,
+          'savedHasRiver (сохранено ДО запроса)': savedHasRiver,
+          'savedHasByproduct (сохранено ДО запроса)': savedHasByproduct,
+          'requestData.has_well (отправлено)': requestData.has_well,
+          'requestData.has_river (отправлено)': requestData.has_river,
+          'requestData.has_byproduct (отправлено)': requestData.has_byproduct,
+        });
+        
+        // ВАЖНО: Восстанавливаем сохраненные значения напрямую
+        // Если значение было выбрано (не пустая строка), используем его
+        // Если не было выбрано, используем значение из requestData
+        setHasWell(savedHasWell !== '' ? savedHasWell : (requestData.has_well ? true : false));
+        setHasRiver(savedHasRiver !== '' ? savedHasRiver : (requestData.has_river ? true : false));
+        setHasByproduct(savedHasByproduct !== '' ? savedHasByproduct : (requestData.has_byproduct ? true : false));
         
         // Перезагружаем требования сразу с принудительным обновлением
         try {
