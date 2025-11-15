@@ -211,8 +211,7 @@ class DemoDataGeneratorService
             mkdir($storagePath, 0755, true);
         }
 
-        // Удаляем старые документы этого клиента
-        Document::deleteAll(['client_id' => $client->id]);
+        // Не удаляем старые документы - обновляем или создаем новые
 
         // Документы для создания
         $documents = [
@@ -266,15 +265,30 @@ class DemoDataGeneratorService
             // file_path в БД: clients/{client_id}/{filename}
             $dbFilePath = 'clients/' . $client->id . '/' . $filename;
 
-            // Создаём запись в БД
-            $document = new Document();
-            $document->client_id = (int)$client->id;
-            $document->file_path = $dbFilePath;
-            $document->type = $docData['type'];
-            $document->status = $docData['status'];
+            // Проверяем, существует ли уже документ с таким file_path
+            $existingDocument = Document::findOne([
+                'client_id' => $client->id,
+                'file_path' => $dbFilePath
+            ]);
             
-            if ($document->save()) {
-                $count++;
+            if ($existingDocument) {
+                // Обновляем существующий документ
+                $existingDocument->type = $docData['type'];
+                $existingDocument->status = $docData['status'];
+                if ($existingDocument->save()) {
+                    $count++;
+                }
+            } else {
+                // Создаём новую запись в БД
+                $document = new Document();
+                $document->client_id = (int)$client->id;
+                $document->file_path = $dbFilePath;
+                $document->type = $docData['type'];
+                $document->status = $docData['status'];
+                
+                if ($document->save()) {
+                    $count++;
+                }
             }
         }
 
