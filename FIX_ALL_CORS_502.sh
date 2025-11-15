@@ -26,7 +26,9 @@ cd /opt/eco-project || { echo -e "${RED}❌ Не найден /opt/eco-project${
 
 # Определяем порты
 NEXTJS_PORT=3002
-BACKEND_PORT=$(ss -tuln | grep LISTEN | grep -oE ":808[0-9]+" | head -1 | cut -d: -f2 || echo "8082")
+# Пытаемся найти порт backend, если не найден - используем 8082
+BACKEND_PORT_FOUND=$(ss -tuln 2>/dev/null | grep LISTEN | grep -oE ":808[0-9]+" | head -1 | cut -d: -f2)
+BACKEND_PORT=${BACKEND_PORT_FOUND:-8082}
 NGINX_PORT=3384
 
 echo "Используемые порты:"
