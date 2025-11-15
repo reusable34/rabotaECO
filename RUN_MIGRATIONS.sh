@@ -15,7 +15,24 @@ cd /opt/eco-project/backend || { echo -e "${RED}❌ Не найден /opt/eco-p
 
 # Проверяем подключение к БД
 echo -e "${YELLOW}[1/3] Проверка подключения к БД...${NC}"
-php yii migrate/up --interactive=0 --migrationPath=@console/migrations 2>&1 | head -5
+php -r "
+try {
+    \$pdo = new PDO('pgsql:host=' . (getenv('DB_HOST') ?: 'localhost') . ';dbname=' . (getenv('DB_NAME') ?: 'eco_client'), 
+                    getenv('DB_USER') ?: 'eco_admin', 
+                    getenv('DB_PASSWORD') ?: 'eco_pass');
+    echo '✅ Подключение к БД успешно\n';
+} catch (PDOException \$e) {
+    echo '❌ Ошибка подключения: ' . \$e->getMessage() . '\n';
+    exit(1);
+}
+" || {
+    echo -e "${RED}❌ Не удалось подключиться к БД${NC}"
+    echo "Проверьте:"
+    echo "  1. PostgreSQL запущен: systemctl status postgresql"
+    echo "  2. База данных создана: sudo -u postgres psql -l | grep eco_client"
+    echo "  3. Пользователь существует: sudo -u postgres psql -c '\du' | grep eco_admin"
+    exit 1
+}
 
 # Запускаем миграции
 echo ""
