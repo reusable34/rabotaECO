@@ -60,24 +60,18 @@ export default function DocumentsPage() {
       formData.append('file', selectedFile);
       formData.append('type', documentType);
       
-      // КРИТИЧЕСКИ ВАЖНО: Для админа нужно передать client_id
-      // Для клиента/менеджера client_id берется из user->client_id на бэкенде
+      // Для админа передаем client_id, если он указан в URL или есть в документах
+      // Если админ привязан к клиенту, client_id возьмется из user->client_id на бэкенде
       if (currentUser?.role === 'admin') {
-        // Админ должен выбрать клиента - используем client_id из URL или первого клиента
         const urlParams = new URLSearchParams(window.location.search);
         const clientIdFromUrl = urlParams.get('client_id');
         if (clientIdFromUrl) {
           formData.append('client_id', clientIdFromUrl);
-        } else {
-          // Если client_id не указан в URL, используем client_id из первого документа или просим выбрать
-          if (documents.length > 0 && documents[0].client_id) {
-            formData.append('client_id', documents[0].client_id.toString());
-          } else {
-            alert('Для загрузки документа администратором необходимо указать client_id. Откройте страницу клиента и загрузите документ оттуда.');
-            setUploading(false);
-            return;
-          }
+        } else if (documents.length > 0 && documents[0].client_id) {
+          // Используем client_id из первого документа, если есть
+          formData.append('client_id', documents[0].client_id.toString());
         }
+        // Если client_id не указан, но админ привязан к клиенту - бэкенд использует user->client_id
       }
 
       await api.post('/document/upload', formData, {

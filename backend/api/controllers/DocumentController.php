@@ -160,23 +160,26 @@ class DocumentController extends ActiveController
             throw new ForbiddenHttpException('User not authenticated');
         }
         
-        // КРИТИЧЕСКИ ВАЖНО: Для админа client_id берется из POST запроса
-        // Для клиента/менеджера - из user->client_id
+        // Простая логика: определяем client_id
         $request = Yii::$app->request;
         $clientId = null;
         
         if ($user->role === User::ROLE_ADMIN) {
-            // Админ может загружать документы для любого клиента
+            // Админ может указать client_id в POST, иначе используем из user->client_id (если привязан)
             $clientId = $request->post('client_id');
+            if (!$clientId && $user->client_id) {
+                // Если админ привязан к клиенту, используем его client_id
+                $clientId = $user->client_id;
+            }
             if (!$clientId) {
-                throw new ForbiddenHttpException('Client ID is required for admin');
+                throw new ForbiddenHttpException('Client ID is required. Please specify client_id in the request or bind user to a client.');
             }
             $clientId = (int)$clientId;
         } else {
-            // Для клиента/менеджера client_id берется из user->client_id
+            // Для клиента/менеджера/специалиста client_id берется из user->client_id
             $clientId = $user->client_id;
             if (!$clientId) {
-                throw new ForbiddenHttpException('Client ID is required');
+                throw new ForbiddenHttpException('User must be bound to a client to upload documents. Please contact administrator.');
             }
         }
         
