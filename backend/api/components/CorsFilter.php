@@ -12,29 +12,26 @@ class CorsFilter extends ActionFilter
     {
         $origin = Yii::$app->request->headers->get('Origin');
         
-        // Разрешаем запросы с любых источников (для продакшн)
-        // Можно ограничить конкретными доменами если нужно
+        // Разрешаем запросы с разных источников
         $allowedOrigins = [
             'http://localhost:3000',
             'http://127.0.0.1:3000',
+            'http://localhost:3001',
+            'http://127.0.0.1:3001',
             'http://85.113.129.96:3384',
-            'http://85.113.129.96',
+            'http://192.168.0.32:3384',
         ];
         
-        // Если origin в списке разрешенных - используем его, иначе разрешаем все (для разработки)
-        if ($origin) {
-            if (in_array($origin, $allowedOrigins)) {
-                Yii::$app->response->headers->set('Access-Control-Allow-Origin', $origin);
-            } else {
-                // Для продакшн разрешаем запросы с любого origin
-                Yii::$app->response->headers->set('Access-Control-Allow-Origin', $origin);
-            }
+        // Если origin в списке разрешенных, используем его
+        if ($origin && in_array($origin, $allowedOrigins)) {
+            Yii::$app->response->headers->set('Access-Control-Allow-Origin', $origin);
+            Yii::$app->response->headers->set('Access-Control-Allow-Credentials', 'true');
         } else {
-            // Если нет Origin заголовка, разрешаем все
-            Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+            // Если origin не указан или не в списке, не устанавливаем заголовки
+            // Это предотвращает использование wildcard с credentials
+            return parent::beforeAction($action);
         }
         
-        Yii::$app->response->headers->set('Access-Control-Allow-Credentials', 'true');
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
         Yii::$app->response->headers->set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Type, Content-Length');
