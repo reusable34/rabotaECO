@@ -12,14 +12,26 @@ class CorsFilter extends ActionFilter
     {
         $origin = Yii::$app->request->headers->get('Origin');
         
-        // Разрешаем запросы с localhost:3000
-        $allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+        // Разрешаем запросы с любых источников (для продакшн)
+        // Можно ограничить конкретными доменами если нужно
+        $allowedOrigins = [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://85.113.129.96:3384',
+            'http://85.113.129.96',
+        ];
         
-        if ($origin && in_array($origin, $allowedOrigins)) {
-            Yii::$app->response->headers->set('Access-Control-Allow-Origin', $origin);
+        // Если origin в списке разрешенных - используем его, иначе разрешаем все (для разработки)
+        if ($origin) {
+            if (in_array($origin, $allowedOrigins)) {
+                Yii::$app->response->headers->set('Access-Control-Allow-Origin', $origin);
+            } else {
+                // Для продакшн разрешаем запросы с любого origin
+                Yii::$app->response->headers->set('Access-Control-Allow-Origin', $origin);
+            }
         } else {
-            // Для других источников используем первый разрешённый
-            Yii::$app->response->headers->set('Access-Control-Allow-Origin', $allowedOrigins[0]);
+            // Если нет Origin заголовка, разрешаем все
+            Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
         }
         
         Yii::$app->response->headers->set('Access-Control-Allow-Credentials', 'true');

@@ -22,6 +22,7 @@ export interface AuthResponse {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
+      console.log('Attempting login to:', api.defaults.baseURL + '/auth/login');
       const response = await api.post<AuthResponse>('/auth/login', credentials);
       if (response.data && response.data.token) {
         Cookies.set('auth_token', response.data.token, { expires: 7 });
@@ -31,6 +32,11 @@ export const authService = {
       }
     } catch (error: any) {
       console.error('Auth service error:', error);
+      // Более детальная обработка ошибок
+      if (!error.response) {
+        // Network error - бэкенд недоступен
+        throw new Error(`Не удалось подключиться к серверу. Проверьте, что бэкенд запущен на ${api.defaults.baseURL}`);
+      }
       throw error;
     }
   },

@@ -21,11 +21,11 @@ class AuthController extends Controller
             'except' => ['login', 'register', 'options'],
         ];
         
-        // Добавляем CORS фильтр
+        // Добавляем CORS фильтр - разрешаем все источники для продакшн
         $behaviors['cors'] = [
             'class' => \yii\filters\Cors::class,
             'cors' => [
-                'Origin' => ['http://localhost:3000'],
+                'Origin' => ['*'], // Разрешаем все источники
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,
