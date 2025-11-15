@@ -39,7 +39,7 @@ echo ""
 # 2. Поиск свободных портов
 echo -e "${YELLOW}[2/8] Поиск свободных портов...${NC}"
 NEXTJS_PORT=$(find_free_port 3002)
-BACKEND_PORT=$(find_free_port 8081)
+BACKEND_PORT=$(find_free_port 8082)  # Начинаем с 8082, т.к. 8081 занят
 NGINX_PORT=3384
 
 echo "Next.js будет на порту: $NEXTJS_PORT"
