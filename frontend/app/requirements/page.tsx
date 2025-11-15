@@ -897,12 +897,6 @@ function RequirementsPageContent() {
                   </span>
                 </div>
                 <div className={styles.readOnlyField}>
-                  <span className={styles.readOnlyLabel}>Водопользование:</span>
-                  <span className={styles.readOnlyValue}>
-                    {client?.has_well ? 'Скважина' : client?.has_river ? 'Река/озеро' : 'Без водопользования'}
-                  </span>
-                </div>
-                <div className={styles.readOnlyField}>
                   <span className={styles.readOnlyLabel}>Побочный продукт:</span>
                   <span className={styles.readOnlyValue}>
                     {client?.has_byproduct ? 'Есть побочный продукт' : 'Нет побочного продукта/навоза/помёта'}
@@ -930,41 +924,6 @@ function RequirementsPageContent() {
                         {cat.title}
                       </option>
                     ))}
-                  </select>
-
-                  <select
-                    value={
-                      // КРИТИЧЕСКИ ВАЖНО: Правильно определяем выбранное значение
-                      // Если явно выбрано true для одного из параметров
-                      (hasWell === true) ? 'well' :
-                      (hasRiver === true) ? 'river' :
-                      // Если явно выбрано false для обоих (пользователь выбрал "Без водопользования")
-                      (hasWell === false && hasRiver === false) ? 'no' :
-                      // Иначе не выбрано (пустая строка)
-                      ''
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '') {
-                        setHasWell('');
-                        setHasRiver('');
-                      } else if (val === 'no') {
-                        setHasWell(false);
-                        setHasRiver(false);
-                      } else if (val === 'well') {
-                        setHasWell(true);
-                        setHasRiver(false);
-                      } else if (val === 'river') {
-                        setHasWell(false);
-                        setHasRiver(true);
-                      }
-                    }}
-                    className={styles.filterSelect}
-                  >
-                    <option value="">Водопользование</option>
-                    <option value="no">Без водопользования</option>
-                    <option value="well">Скважина</option>
-                    <option value="river">Река/озеро</option>
                   </select>
 
                   <select
