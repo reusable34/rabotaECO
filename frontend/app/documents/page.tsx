@@ -12,10 +12,21 @@ export default function DocumentsPage() {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
+    loadCurrentUser();
     loadDocuments();
   }, []);
+
+  const loadCurrentUser = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setCurrentUser(res.data);
+    } catch (error) {
+      console.error('Error loading current user:', error);
+    }
+  };
 
   const loadDocuments = async () => {
     try {
@@ -48,6 +59,26 @@ export default function DocumentsPage() {
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('type', documentType);
+      
+      // КРИТИЧЕСКИ ВАЖНО: Для админа нужно передать client_id
+      // Для клиента/менеджера client_id берется из user->client_id на бэкенде
+      if (currentUser?.role === 'admin') {
+        // Админ должен выбрать клиента - используем client_id из URL или первого клиента
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientIdFromUrl = urlParams.get('client_id');
+        if (clientIdFromUrl) {
+          formData.append('client_id', clientIdFromUrl);
+        } else {
+          // Если client_id не указан в URL, используем client_id из первого документа или просим выбрать
+          if (documents.length > 0 && documents[0].client_id) {
+            formData.append('client_id', documents[0].client_id.toString());
+          } else {
+            alert('Для загрузки документа администратором необходимо указать client_id. Откройте страницу клиента и загрузите документ оттуда.');
+            setUploading(false);
+            return;
+          }
+        }
+      }
 
       await api.post('/document/upload', formData, {
         headers: {
