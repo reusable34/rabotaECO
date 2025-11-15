@@ -45,6 +45,8 @@ return [
             'enableStrictParsing' => false,
             'showScriptName' => false,
             'rules' => [
+                'GET health' => 'health/index',
+                'OPTIONS health' => 'health/options',
                 'POST auth/login' => 'auth/login',
                 'POST auth/register' => 'auth/register',
                 'GET auth/me' => 'auth/me',
