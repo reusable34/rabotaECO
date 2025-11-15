@@ -73,13 +73,13 @@ export default function RequirementsPage() {
       if (!Array.isArray(requirementsRes.data) && requirementsRes.data?.items) {
         console.log('🔍 DEBUG (начальная загрузка): Используется items, всего элементов:', requirementsRes.data.items.length);
       }
-      console.log('🔍 DEBUG (начальная загрузка): Все требования:', reqs.map(r => ({ id: r.id, title: r.title })));
+      console.log('🔍 DEBUG (начальная загрузка): Все требования:', reqs.map((r: Requirement) => ({ id: r.id, title: r.title })));
       
       // Удаляем дубликаты по ID и названию
       const seenIds = new Set<number>();
       const seenTitles = new Set<string>();
       const beforeFilterCount = reqs.length;
-      reqs = reqs.filter(req => {
+      reqs = reqs.filter((req: Requirement) => {
         if (seenIds.has(req.id)) {
           console.warn('⚠️ Дубликат по ID (начальная загрузка):', req.id, req.title);
           return false;
@@ -240,13 +240,13 @@ export default function RequirementsPage() {
           if (!Array.isArray(requirementsRes.data) && requirementsRes.data?.items) {
             console.log('🔍 DEBUG (после пересчета): Используется items, всего элементов:', requirementsRes.data.items.length);
           }
-          console.log('🔍 DEBUG (после пересчета): Все требования:', reqs.map(r => ({ id: r.id, title: r.title })));
+          console.log('🔍 DEBUG (после пересчета): Все требования:', reqs.map((r: Requirement) => ({ id: r.id, title: r.title })));
           
           // Удаляем дубликаты по ID и названию (на случай если они все же появились)
           const seenIds = new Set<number>();
           const seenTitles = new Set<string>();
           const beforeFilterCount = reqs.length;
-          reqs = reqs.filter(req => {
+          reqs = reqs.filter((req: Requirement) => {
             if (seenIds.has(req.id)) {
               console.warn('⚠️ Дубликат по ID:', req.id, req.title);
               return false;
@@ -265,7 +265,7 @@ export default function RequirementsPage() {
           }
           
           console.log('✅ Обновление требований после пересчета:', reqs.length, 'требований');
-          console.log('✅ Все требования:', reqs.map(r => r.title));
+          console.log('✅ Все требования:', reqs.map((r: Requirement) => r.title));
           
           // Принудительно обновляем состояние - создаем полностью новый массив
           setRequirements([]); // Сначала очищаем
