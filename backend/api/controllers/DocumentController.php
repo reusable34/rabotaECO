@@ -60,6 +60,21 @@ class DocumentController extends ActiveController
     {
         $actions = parent::actions();
         unset($actions['create'], $actions['update'], $actions['delete'], $actions['view']);
+        
+        // Регистрируем кастомные actions для upload и download через InlineAction
+        // Это нужно для того, чтобы Yii2 REST мог найти методы через extraPatterns
+        $actions['upload'] = [
+            'class' => 'yii\base\InlineAction',
+            'controller' => $this,
+            'actionMethod' => 'actionUpload',
+        ];
+        
+        $actions['download'] = [
+            'class' => 'yii\base\InlineAction',
+            'controller' => $this,
+            'actionMethod' => 'actionDownload',
+        ];
+        
         return $actions;
     }
 

@@ -57,8 +57,12 @@ return [
                 'POST auth/register' => 'auth/register',
                 'GET auth/me' => 'auth/me',
                 'OPTIONS <action>' => 'auth/options',
-                // Явные маршруты для OPTIONS запросов к document
+                // Явные маршруты для кастомных действий (перед REST правилами для приоритета)
+                'GET requirement/<id:\d+>/risks' => 'requirement/risks',
+                'OPTIONS requirement/<id:\d+>/risks' => 'requirement/options',
+                'POST document/upload' => 'document/upload',
                 'OPTIONS document/upload' => 'document/options',
+                'GET document/<id:\d+>/download' => 'document/download',
                 'OPTIONS document/<id:\d+>/download' => 'document/options',
                 [
                     'class' => 'yii\rest\UrlRule',
