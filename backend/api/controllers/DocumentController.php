@@ -21,17 +21,8 @@ class DocumentController extends ActiveController
     {
         $behaviors = parent::behaviors();
         
-        // CORS настройки согласно ТЗ
-        $behaviors['cors'] = [
-            'class' => \yii\filters\Cors::class,
-            'cors' => [
-                'Origin' => ['http://localhost:3000'],
-                'Access-Control-Request-Method' => ['GET', 'POST', 'OPTIONS'],
-                'Access-Control-Request-Headers' => ['Authorization', 'Content-Type'],
-                'Access-Control-Allow-Credentials' => true,
-                'Access-Control-Max-Age' => 3600,
-            ],
-        ];
+        // CORS обрабатывается глобально через CorsFilter в main.php
+        // Не нужно дублировать здесь
         
         $behaviors['authenticator'] = [
             'class' => JwtHttpBearerAuth::class,
