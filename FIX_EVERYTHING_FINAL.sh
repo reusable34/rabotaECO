@@ -41,7 +41,7 @@ EOF
 echo ""
 
 # 3. Запуск миграций
-echo -e "${YELLOW}[3/5] Запуск миграций...${NC}"
+echo -e "${YELLOW}[3/6] Запуск миграций...${NC}"
 cd /opt/eco-project/backend
 php yii migrate --interactive=0 2>&1 | tail -5
 if [ $? -eq 0 ]; then
@@ -51,8 +51,19 @@ else
 fi
 echo ""
 
-# 4. Перезапуск PHP-FPM
-echo -e "${YELLOW}[4/5] Перезапуск PHP-FPM...${NC}"
+# 4. Создание демо-пользователя
+echo -e "${YELLOW}[4/6] Создание демо-пользователя...${NC}"
+cd /opt/eco-project/backend
+php yii seed 2>&1 | tail -10
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Демо-пользователь создан${NC}"
+else
+    echo -e "${YELLOW}⚠️  Демо-пользователь может быть уже создан${NC}"
+fi
+echo ""
+
+# 5. Перезапуск PHP-FPM
+echo -e "${YELLOW}[5/6] Перезапуск PHP-FPM...${NC}"
 systemctl restart php8.2-fpm 2>/dev/null || systemctl restart php-fpm 2>/dev/null || true
 sleep 2
 if systemctl is-active --quiet php8.2-fpm || systemctl is-active --quiet php-fpm; then
@@ -62,8 +73,8 @@ else
 fi
 echo ""
 
-# 5. Финальная проверка
-echo -e "${YELLOW}[5/5] Финальная проверка...${NC}"
+# 6. Финальная проверка
+echo -e "${YELLOW}[6/6] Финальная проверка...${NC}"
 cd /opt/eco-project/backend
 php -r "
 try {
