@@ -5,6 +5,69 @@ import api from '@/lib/api';
 import { Event } from '@/lib/types';
 import styles from './calendar.module.scss';
 
+const EventModal = ({ event, onClose, onSave }: { event: Event | null, onClose: () => void, onSave: (data: any) => void }) => {
+  const [title, setTitle] = useState(event?.title || '');
+  const [date, setDate] = useState(event?.date ? (event.date.includes('T') ? event.date.split('T')[0] : event.date) : '');
+  const [completed, setCompleted] = useState(event?.completed || false);
+
+  useEffect(() => {
+    setTitle(event?.title || '');
+    setDate(event?.date ? (event.date.includes('T') ? event.date.split('T')[0] : event.date) : '');
+    setCompleted(event?.completed || false);
+  }, [event]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !date) {
+      alert('Заполните все обязательные поля');
+      return;
+    }
+    onSave({ title, date, completed });
+  };
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <h2>{event ? 'Редактировать событие' : 'Добавить событие'}</h2>
+        <form onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label>Название события *</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label>Дата *</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label>
+              <input
+                type="checkbox"
+                checked={completed}
+                onChange={(e) => setCompleted(e.target.checked)}
+              />
+              Выполнено
+            </label>
+          </div>
+          <div className={styles.modalActions}>
+            <button type="button" onClick={onClose}>Отмена</button>
+            <button type="submit">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default function CalendarPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -233,68 +296,5 @@ export default function CalendarPage() {
       </main>
     </div>
   );
-  
-  const EventModal = ({ event, onClose, onSave }: { event: Event | null, onClose: () => void, onSave: (data: any) => void }) => {
-    const [title, setTitle] = useState(event?.title || '');
-    const [date, setDate] = useState(event?.date ? (event.date.includes('T') ? event.date.split('T')[0] : event.date) : '');
-    const [completed, setCompleted] = useState(event?.completed || false);
-
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!title || !date) {
-        alert('Заполните все обязательные поля');
-        return;
-      }
-      onSave({ title, date, completed });
-    };
-
-    return (
-      <div className={styles.modalOverlay} onClick={onClose}>
-        <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-          <h2>{event ? 'Редактировать событие' : 'Добавить событие'}</h2>
-          <form onSubmit={handleSubmit} className={styles.modalForm}>
-            <label>
-              Название:
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className={styles.input}
-                required
-              />
-            </label>
-            <label>
-              Дата:
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className={styles.input}
-                required
-              />
-            </label>
-            <label style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
-              <input
-                type="checkbox"
-                checked={completed}
-                onChange={(e) => setCompleted(e.target.checked)}
-              />
-              Выполнено
-            </label>
-            <div className={styles.modalButtons}>
-              <button type="button" onClick={onClose} className={styles.cancelButton}>Отмена</button>
-              <button
-                type="submit"
-                className={styles.saveButton}
-                disabled={!title || !date}
-              >
-                Сохранить
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
 }
 
