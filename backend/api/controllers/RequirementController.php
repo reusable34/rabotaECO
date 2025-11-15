@@ -216,6 +216,11 @@ class RequirementController extends ActiveController
 
     public function actionRisks($id)
     {
+        // КРИТИЧЕСКИЙ ЛОГ для отладки
+        Yii::error("=== actionRisks CALLED with id={$id} ===");
+        Yii::error("Request URI: " . Yii::$app->request->url);
+        Yii::error("Request Method: " . Yii::$app->request->method);
+        
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         
         try {
