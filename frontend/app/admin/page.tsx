@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [selectedRequirement, setSelectedRequirement] = useState<Requirement | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedNpa, setSelectedNpa] = useState<Npa | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Форма редактирования требования
   const [requirementForm, setRequirementForm] = useState({
@@ -433,8 +434,19 @@ export default function AdminPage() {
   return (
     <div className={styles.admin}>
       <header className={styles.header}>
-        <h1>Админ панель</h1>
-        <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
+        <div className={styles.headerTop}>
+          <h1>Админ панель</h1>
+          <button 
+            className={styles.mobileMenuButton}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Меню"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <div className={styles.headerActions}>
           <button onClick={() => router.push('/dashboard')} className={styles.backButton}>
             Вернуться в кабинет
           </button>
@@ -455,44 +467,64 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className={styles.tabs}>
+      <div className={`${styles.tabs} ${mobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
         <button
           className={`${styles.tab} ${activeTab === 'dashboard' ? styles.active : ''}`}
-          onClick={() => setActiveTab('dashboard')}
+          onClick={() => {
+            setActiveTab('dashboard');
+            setMobileMenuOpen(false);
+          }}
         >
           Дашборд
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'questionnaire' ? styles.active : ''}`}
-          onClick={() => setActiveTab('questionnaire')}
+          onClick={() => {
+            setActiveTab('questionnaire');
+            setMobileMenuOpen(false);
+          }}
         >
           Анкета клиента
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'clients' ? styles.active : ''}`}
-          onClick={() => setActiveTab('clients')}
+          onClick={() => {
+            setActiveTab('clients');
+            setMobileMenuOpen(false);
+          }}
         >
           Клиенты
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'requirements' ? styles.active : ''}`}
-          onClick={() => setActiveTab('requirements')}
+          onClick={() => {
+            setActiveTab('requirements');
+            setMobileMenuOpen(false);
+          }}
         >
           Требования
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'users' ? styles.active : ''}`}
-          onClick={() => setActiveTab('users')}
+          onClick={() => {
+            setActiveTab('users');
+            setMobileMenuOpen(false);
+          }}
         >
           Пользователи
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'npa' ? styles.active : ''}`}
-          onClick={() => setActiveTab('npa')}
+          onClick={() => {
+            setActiveTab('npa');
+            setMobileMenuOpen(false);
+          }}
         >
           Справочник НПА
         </button>
       </div>
+      
+      {mobileMenuOpen && <div className={styles.mobileMenuOverlay} onClick={() => setMobileMenuOpen(false)}></div>}
 
       <main className={styles.content}>
         {activeTab === 'dashboard' && (
