@@ -41,7 +41,9 @@ function RequirementsPageContent() {
     try {
       const res = await api.get('/auth/me');
       setCurrentUser(res.data);
-      console.log('Current user loaded:', res.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Current user loaded:', res.data);
+      }
     } catch (error) {
       console.error('Error loading current user:', error);
       setCurrentUser(null);
@@ -66,14 +68,17 @@ function RequirementsPageContent() {
       const clients = Array.isArray(clientRes.data) ? clientRes.data : (clientRes.data?.items || []);
       let reqs = Array.isArray(requirementsRes.data) ? requirementsRes.data : (requirementsRes.data?.items || []);
       
-      console.log('🔍 DEBUG (начальная загрузка): Полный ответ API:', JSON.stringify(requirementsRes.data, null, 2));
-      console.log('🔍 DEBUG (начальная загрузка): Требования получены с бэкенда:', reqs.length, 'шт.');
-      console.log('🔍 DEBUG (начальная загрузка): URL запроса:', requirementUrl);
-      console.log('🔍 DEBUG (начальная загрузка): Тип данных:', Array.isArray(requirementsRes.data) ? 'массив' : 'объект');
-      if (!Array.isArray(requirementsRes.data) && requirementsRes.data?.items) {
-        console.log('🔍 DEBUG (начальная загрузка): Используется items, всего элементов:', requirementsRes.data.items.length);
+      const isDev = process.env.NODE_ENV === 'development';
+      if (isDev) {
+        console.log('🔍 DEBUG (начальная загрузка): Полный ответ API:', JSON.stringify(requirementsRes.data, null, 2));
+        console.log('🔍 DEBUG (начальная загрузка): Требования получены с бэкенда:', reqs.length, 'шт.');
+        console.log('🔍 DEBUG (начальная загрузка): URL запроса:', requirementUrl);
+        console.log('🔍 DEBUG (начальная загрузка): Тип данных:', Array.isArray(requirementsRes.data) ? 'массив' : 'объект');
+        if (!Array.isArray(requirementsRes.data) && requirementsRes.data?.items) {
+          console.log('🔍 DEBUG (начальная загрузка): Используется items, всего элементов:', requirementsRes.data.items.length);
+        }
+        console.log('🔍 DEBUG (начальная загрузка): Все требования:', reqs.map((r: Requirement) => ({ id: r.id, title: r.title })));
       }
-      console.log('🔍 DEBUG (начальная загрузка): Все требования:', reqs.map((r: Requirement) => ({ id: r.id, title: r.title })));
       
       // Удаляем дубликаты по ID и названию
       const seenIds = new Set<number>();
@@ -81,11 +86,15 @@ function RequirementsPageContent() {
       const beforeFilterCount = reqs.length;
       reqs = reqs.filter((req: Requirement) => {
         if (seenIds.has(req.id)) {
-          console.warn('⚠️ Дубликат по ID (начальная загрузка):', req.id, req.title);
+          if (isDev) {
+            console.warn('⚠️ Дубликат по ID (начальная загрузка):', req.id, req.title);
+          }
           return false;
         }
         if (seenTitles.has(req.title)) {
-          console.warn('⚠️ Дубликат по названию (начальная загрузка):', req.title);
+          if (isDev) {
+            console.warn('⚠️ Дубликат по названию (начальная загрузка):', req.title);
+          }
           return false;
         }
         seenIds.add(req.id);
@@ -93,11 +102,13 @@ function RequirementsPageContent() {
         return true;
       });
       
-      if (beforeFilterCount !== reqs.length) {
+      if (beforeFilterCount !== reqs.length && isDev) {
         console.warn(`⚠️ После фильтрации дубликатов (начальная загрузка): ${beforeFilterCount} -> ${reqs.length} требований`);
       }
       
-      console.log('✅ Начальная загрузка: Всего требований после фильтрации:', reqs.length);
+      if (isDev) {
+        console.log('✅ Начальная загрузка: Всего требований после фильтрации:', reqs.length);
+      }
       
       const cats = Array.isArray(categoriesRes.data) ? categoriesRes.data : (categoriesRes.data?.items || []);
       const docs = Array.isArray(documentsRes.data) ? documentsRes.data : (documentsRes.data?.items || []);
@@ -110,11 +121,15 @@ function RequirementsPageContent() {
       const beforeContractFilterCount = conts.length;
       conts = conts.filter((contract: Contract) => {
         if (seenContractIds.has(contract.id)) {
-          console.warn('⚠️ Дубликат договора по ID:', contract.id, contract.number);
+          if (isDev) {
+            console.warn('⚠️ Дубликат договора по ID:', contract.id, contract.number);
+          }
           return false;
         }
         if (seenContractNumbers.has(contract.number)) {
-          console.warn('⚠️ Дубликат договора по номеру:', contract.number);
+          if (isDev) {
+            console.warn('⚠️ Дубликат договора по номеру:', contract.number);
+          }
           return false;
         }
         seenContractIds.add(contract.id);
@@ -122,7 +137,7 @@ function RequirementsPageContent() {
         return true;
       });
       
-      if (beforeContractFilterCount !== conts.length) {
+      if (beforeContractFilterCount !== conts.length && isDev) {
         console.warn(`⚠️ После фильтрации дубликатов договоров: ${beforeContractFilterCount} -> ${conts.length}`);
       }
       
@@ -233,14 +248,17 @@ function RequirementsPageContent() {
           const requirementsRes = await api.get(requirementUrl);
           let reqs = Array.isArray(requirementsRes.data) ? requirementsRes.data : (requirementsRes.data?.items || []);
           
-          console.log('🔍 DEBUG (после пересчета): Полный ответ API:', JSON.stringify(requirementsRes.data, null, 2));
-          console.log('🔍 DEBUG (после пересчета): Требования получены с бэкенда:', reqs.length, 'шт.');
-          console.log('🔍 DEBUG (после пересчета): URL запроса:', requirementUrl);
-          console.log('🔍 DEBUG (после пересчета): Тип данных:', Array.isArray(requirementsRes.data) ? 'массив' : 'объект');
-          if (!Array.isArray(requirementsRes.data) && requirementsRes.data?.items) {
-            console.log('🔍 DEBUG (после пересчета): Используется items, всего элементов:', requirementsRes.data.items.length);
+          const isDev = process.env.NODE_ENV === 'development';
+          if (isDev) {
+            console.log('🔍 DEBUG (после пересчета): Полный ответ API:', JSON.stringify(requirementsRes.data, null, 2));
+            console.log('🔍 DEBUG (после пересчета): Требования получены с бэкенда:', reqs.length, 'шт.');
+            console.log('🔍 DEBUG (после пересчета): URL запроса:', requirementUrl);
+            console.log('🔍 DEBUG (после пересчета): Тип данных:', Array.isArray(requirementsRes.data) ? 'массив' : 'объект');
+            if (!Array.isArray(requirementsRes.data) && requirementsRes.data?.items) {
+              console.log('🔍 DEBUG (после пересчета): Используется items, всего элементов:', requirementsRes.data.items.length);
+            }
+            console.log('🔍 DEBUG (после пересчета): Все требования:', reqs.map((r: Requirement) => ({ id: r.id, title: r.title })));
           }
-          console.log('🔍 DEBUG (после пересчета): Все требования:', reqs.map((r: Requirement) => ({ id: r.id, title: r.title })));
           
           // Удаляем дубликаты по ID и названию (на случай если они все же появились)
           const seenIds = new Set<number>();
@@ -248,11 +266,15 @@ function RequirementsPageContent() {
           const beforeFilterCount = reqs.length;
           reqs = reqs.filter((req: Requirement) => {
             if (seenIds.has(req.id)) {
-              console.warn('⚠️ Дубликат по ID:', req.id, req.title);
+              if (isDev) {
+                console.warn('⚠️ Дубликат по ID:', req.id, req.title);
+              }
               return false;
             }
             if (seenTitles.has(req.title)) {
-              console.warn('⚠️ Дубликат по названию:', req.title);
+              if (isDev) {
+                console.warn('⚠️ Дубликат по названию:', req.title);
+              }
               return false;
             }
             seenIds.add(req.id);
@@ -260,12 +282,14 @@ function RequirementsPageContent() {
             return true;
           });
           
-          if (beforeFilterCount !== reqs.length) {
+          if (beforeFilterCount !== reqs.length && isDev) {
             console.warn(`⚠️ После фильтрации дубликатов: ${beforeFilterCount} -> ${reqs.length} требований`);
           }
           
-          console.log('✅ Обновление требований после пересчета:', reqs.length, 'требований');
-          console.log('✅ Все требования:', reqs.map((r: Requirement) => r.title));
+          if (isDev) {
+            console.log('✅ Обновление требований после пересчета:', reqs.length, 'требований');
+            console.log('✅ Все требования:', reqs.map((r: Requirement) => r.title));
+          }
           
           // Принудительно обновляем состояние - создаем полностью новый массив
           setRequirements([]); // Сначала очищаем
