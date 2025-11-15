@@ -63,7 +63,20 @@ class RequirementGeneratorService
         // Используем транзакцию для атомарности операции
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            foreach ($allRequirements as $reqData) {
+            // Дополнительная проверка - убеждаемся, что все старые требования удалены
+            $remainingBeforeCreate = Requirement::find()->where(['client_id' => $client->id])->count();
+            if ($remainingBeforeCreate > 0) {
+                Yii::error("CRITICAL: Found {$remainingBeforeCreate} remaining requirements for client_id={$client->id} before creating new ones!");
+                Yii::error("Force deleting remaining requirements...");
+                // Принудительно удаляем оставшиеся
+                Requirement::deleteAll(['client_id' => $client->id]);
+                // Удаляем риски
+                $riskDeleteQuery = "DELETE FROM risks WHERE requirement_id IN (SELECT id FROM requirements WHERE client_id = :client_id)";
+                Yii::$app->db->createCommand($riskDeleteQuery, [':client_id' => $client->id])->execute();
+            }
+            
+            Yii::info("Creating " . count($allRequirements) . " requirements for client_id={$client->id}, category_id={$categoryId}");
+            foreach ($allRequirements as $idx => $reqData) {
                 // Проверяем, не существует ли уже такое требование (на случай параллельных запросов)
                 $existing = Requirement::findOne([
                     'client_id' => $client->id,
@@ -103,6 +116,19 @@ class RequirementGeneratorService
             }
             
             $transaction->commit();
+            
+            // Финальная проверка - убеждаемся, что создано правильное количество
+            $finalCount = Requirement::find()->where(['client_id' => $client->id])->count();
+            Yii::info("Final check: {$finalCount} requirements in DB for client_id={$client->id} (expected: " . count($createdRequirements) . ")");
+            
+            if ($finalCount != count($createdRequirements)) {
+                Yii::error("WARNING: Mismatch! Created " . count($createdRequirements) . " but DB has {$finalCount} requirements");
+                // Выводим список всех требований в БД
+                $allInDb = Requirement::find()->where(['client_id' => $client->id])->all();
+                foreach ($allInDb as $req) {
+                    Yii::error("  DB requirement ID {$req->id}: {$req->title}");
+                }
+            }
         } catch (\Exception $e) {
             $transaction->rollBack();
             Yii::error("Error generating requirements for client_id={$client->id}: " . $e->getMessage());
