@@ -821,41 +821,6 @@ export default function AdminPage() {
                     <option key={client.id} value={client.id.toString()}>{client.name}</option>
                   ))}
                 </select>
-                {filterClientId && (
-                  <button
-                    onClick={async () => {
-                      if (!confirm('Пересчитать требования для этого клиента? Все текущие требования будут удалены и созданы заново.')) {
-                        return;
-                      }
-                      try {
-                        const client = clients.find((c: Client) => c.id.toString() === filterClientId);
-                        if (!client) return;
-                        
-                        const response = await api.post('/requirement/recalculate', {
-                          client_id: client.id,
-                          category_id: client.category_id,
-                          has_well: client.has_well || false,
-                          has_river: client.has_river || false,
-                          has_byproduct: client.has_byproduct || false,
-                          responsible_person: client.responsible_person || '',
-                        });
-                        
-                        if (response.data.success) {
-                          alert(`Требования успешно пересчитаны! Создано требований: ${response.data.count || 0}`);
-                          await loadRequirements();
-                        } else {
-                          alert('Ошибка при пересчете требований');
-                        }
-                      } catch (error: any) {
-                        alert(error.response?.data?.message || 'Ошибка при пересчете требований');
-                      }
-                    }}
-                    className={styles.recalculateButton}
-                    style={{ marginRight: '10px', backgroundColor: '#28a745', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                  >
-                    🔄 Пересчитать требования
-                  </button>
-                )}
                 <button 
                   onClick={() => {
                     if (!filterClientId) {
