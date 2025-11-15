@@ -290,23 +290,9 @@ server {
     # Health endpoint - проксируем на backend с правильными CORS
     location = /health {
         # CORS заголовки для health endpoint
-        # Проверяем Origin и устанавливаем соответствующий заголовок
-        set \$cors_origin "";
-        if (\$http_origin ~* "^http://(localhost|127\.0\.0\.1):300[0-9]+$") {
-            set \$cors_origin \$http_origin;
-        }
-        if (\$http_origin ~* "^http://85\.113\.129\.96(:3384)?$") {
-            set \$cors_origin \$http_origin;
-        }
-        if (\$http_origin ~* "^http://192\.168\.0\.32(:3384)?$") {
-            set \$cors_origin \$http_origin;
-        }
-        if (\$http_origin ~* "^https://85\.113\.129\.96(:3384)?$") {
-            set \$cors_origin \$http_origin;
-        }
-        
-        if (\$cors_origin != "") {
-            add_header 'Access-Control-Allow-Origin' \$cors_origin always;
+        # Используем один if с регулярным выражением для всех разрешенных origins
+        if (\$http_origin ~* "^https?://((localhost|127\.0\.0\.1):300[0-9]+|85\.113\.129\.96(:3384)?|192\.168\.0\.32(:3384)?)$") {
+            add_header 'Access-Control-Allow-Origin' \$http_origin always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
         }
         add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
@@ -316,8 +302,8 @@ server {
         
         # Для OPTIONS запросов (preflight)
         if (\$request_method = 'OPTIONS') {
-            if (\$cors_origin != "") {
-                add_header 'Access-Control-Allow-Origin' \$cors_origin always;
+            if (\$http_origin ~* "^https?://((localhost|127\.0\.0\.1):300[0-9]+|85\.113\.129\.96(:3384)?|192\.168\.0\.32(:3384)?)$") {
+                add_header 'Access-Control-Allow-Origin' \$http_origin always;
                 add_header 'Access-Control-Allow-Credentials' 'true' always;
             }
             add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
