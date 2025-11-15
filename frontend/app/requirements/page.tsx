@@ -209,11 +209,11 @@ function RequirementsPageContent() {
       // Если значение не было изменено (пустая строка), используем значение из клиента, но явно преобразуем в boolean
       const requestData: any = {
         category_id: categoryId || client.category_id,
-        // КРИТИЧЕСКИ ВАЖНО: Если значение не выбрано (пустая строка), передаем false
-        // НЕ используем значение из клиента, чтобы гарантировать правильную генерацию требований
-        has_well: hasWell === '' ? false : Boolean(hasWell),
-        has_river: hasRiver === '' ? false : Boolean(hasRiver),
-        has_byproduct: hasByproduct === '' ? false : Boolean(hasByproduct),
+        // КРИТИЧЕСКИ ВАЖНО: Если значение не выбрано (пустая строка), используем значение из клиента
+        // Если значение явно выбрано (true/false), используем его
+        has_well: hasWell === '' ? (client.has_well || false) : Boolean(hasWell),
+        has_river: hasRiver === '' ? (client.has_river || false) : Boolean(hasRiver),
+        has_byproduct: hasByproduct === '' ? (client.has_byproduct || false) : Boolean(hasByproduct),
         responsible_person: responsiblePerson || client.responsible_person || '',
       };
       
@@ -266,10 +266,17 @@ function RequirementsPageContent() {
           const updatedClient = response.data.client;
           setClient(updatedClient);
           setCategoryId(updatedClient.category_id || '');
-          setHasWell(updatedClient.has_well || false);
-          setHasRiver(updatedClient.has_river || false);
-          setHasByproduct(updatedClient.has_byproduct || false);
+          // КРИТИЧЕСКИ ВАЖНО: Сохраняем значения из БД, явно преобразуя в boolean или пустую строку
+          // Используем те же значения, что были отправлены в запросе, чтобы не сбрасывать выбор пользователя
+          setHasWell(updatedClient.has_well === true ? true : (updatedClient.has_well === false ? false : ''));
+          setHasRiver(updatedClient.has_river === true ? true : (updatedClient.has_river === false ? false : ''));
+          setHasByproduct(updatedClient.has_byproduct === true ? true : (updatedClient.has_byproduct === false ? false : ''));
           setResponsiblePerson(updatedClient.responsible_person || '');
+        } else {
+          // Если клиент не вернулся в ответе, обновляем состояния из requestData, чтобы сохранить выбор пользователя
+          setHasWell(requestData.has_well ? true : false);
+          setHasRiver(requestData.has_river ? true : false);
+          setHasByproduct(requestData.has_byproduct ? true : false);
         }
         
         // Перезагружаем требования сразу с принудительным обновлением
