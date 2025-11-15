@@ -200,26 +200,40 @@ class DocumentController extends ActiveController
         }
         
         // Путь сохранения файла: backend/api/storage/clients/{client_id}/{originalName}
-        $storagePath = Yii::getAlias('@api/storage/clients/' . $clientId);
+        $baseStoragePath = Yii::getAlias('@api/storage');
+        $storagePath = $baseStoragePath . '/clients/' . $clientId;
         
+        // Создаем базовую директорию storage, если её нет
+        if (!is_dir($baseStoragePath)) {
+            if (!mkdir($baseStoragePath, 0777, true)) {
+                Yii::error("Failed to create base storage directory: {$baseStoragePath}");
+                Yii::$app->response->statusCode = 500;
+                return ['error' => 'Failed to create storage directory'];
+            }
+            @chmod($baseStoragePath, 0777);
+        }
+        
+        // Создаем директорию для клиента, если её нет
         if (!is_dir($storagePath)) {
-            if (!mkdir($storagePath, 0755, true)) {
+            if (!mkdir($storagePath, 0777, true)) {
                 Yii::error("Failed to create storage directory: {$storagePath}");
                 Yii::$app->response->statusCode = 500;
                 return ['error' => 'Failed to create storage directory'];
             }
-            // КРИТИЧЕСКИ ВАЖНО: Устанавливаем правильные права доступа
-            chmod($storagePath, 0755);
-            // Пытаемся установить владельца (www-data или root)
-            $owner = file_exists('/etc/debian_version') ? 'www-data' : 'root';
-            @chown($storagePath, $owner);
+            @chmod($storagePath, 0777);
         }
         
-        // Проверяем права на запись
+        // Проверяем и исправляем права на запись
         if (!is_writable($storagePath)) {
-            Yii::error("Storage directory is not writable: {$storagePath}");
-            Yii::$app->response->statusCode = 500;
-            return ['error' => 'Storage directory is not writable'];
+            // Пытаемся установить права на запись
+            @chmod($storagePath, 0777);
+            
+            // Проверяем снова
+            if (!is_writable($storagePath)) {
+                Yii::error("Storage directory is not writable: {$storagePath}, permissions: " . substr(sprintf('%o', fileperms($storagePath)), -4));
+                Yii::$app->response->statusCode = 500;
+                return ['error' => 'Storage directory is not writable. Please check permissions on server.'];
+            }
         }
         
         // Используем оригинальное имя файла, но проверяем на конфликты
@@ -282,9 +296,14 @@ class DocumentController extends ActiveController
             throw new ForbiddenHttpException('User not authenticated');
         }
         
-        // Проверка прав доступа
-        if ($user->role !== User::ROLE_ADMIN && (int)$document->client_id !== (int)$user->client_id) {
-            throw new ForbiddenHttpException('Access denied');
+        // Проверка прав доступа: админ видит все, остальные только документы своего клиента
+        if ($user->role !== User::ROLE_ADMIN) {
+            $userClientId = $user->client_id !== null ? (int)$user->client_id : null;
+            $docClientId = (int)$document->client_id;
+            
+            if ($userClientId === null || $docClientId !== $userClientId) {
+                throw new ForbiddenHttpException('Access denied. You can only download documents of your client.');
+            }
         }
         
         // Формируем полный путь: file_path в БД = "clients/{client_id}/{filename}"
