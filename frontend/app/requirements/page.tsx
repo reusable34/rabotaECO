@@ -265,13 +265,17 @@ function RequirementsPageContent() {
         // Перезагружаем требования сразу с принудительным обновлением
         try {
           // Небольшая задержка, чтобы БД успела обновиться
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 500));
           
-          // Используем тот же URL, что и при первоначальной загрузке
-          const clientIdFromUrl = searchParams?.get('client_id');
-          const requirementUrl = clientIdFromUrl 
-            ? `/requirement?client_id=${clientIdFromUrl}&_t=${Date.now()}` 
+          // КРИТИЧЕСКИ ВАЖНО: Используем client_id из запроса или из URL для правильной загрузки требований
+          const clientIdForReload = requestData.client_id || searchParams?.get('client_id') || client?.id;
+          const requirementUrl = clientIdForReload 
+            ? `/requirement?client_id=${clientIdForReload}&_t=${Date.now()}` 
             : `/requirement?_t=${Date.now()}`;
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Перезагрузка требований после пересчета: client_id=', clientIdForReload, 'URL:', requirementUrl);
+          }
           
           // Добавляем timestamp для предотвращения кэширования
           const requirementsRes = await api.get(requirementUrl);
