@@ -38,43 +38,62 @@ class AuthController extends Controller
      */
     public function actionLogin()
     {
-        $email = Yii::$app->request->post('email');
-        $password = Yii::$app->request->post('password');
+        try {
+            $email = Yii::$app->request->post('email');
+            $password = Yii::$app->request->post('password');
 
-        if (!$email || !$password) {
-            throw new BadRequestHttpException('Email and password are required');
+            if (!$email || !$password) {
+                throw new BadRequestHttpException('Email and password are required');
+            }
+
+            $user = User::findByEmail($email);
+            if (!$user || !$user->validatePassword($password)) {
+                throw new UnauthorizedHttpException('Invalid credentials');
+            }
+
+            // Проверяем наличие JWT компонента
+            if (!Yii::$app->has('jwt')) {
+                Yii::error('JWT component is not configured');
+                throw new \Exception('JWT component is not configured');
+            }
+
+            /** @var Jwt $jwt */
+            $jwt = Yii::$app->jwt;
+            $signer = $jwt->getSigner('HS256');
+            $key = $jwt->getKey();
+            $now = new \DateTimeImmutable();
+
+            $token = $jwt->getBuilder()
+                ->issuedBy(getenv('BACKEND_URL') ?: 'http://localhost:8080')
+                ->permittedFor(getenv('BACKEND_URL') ?: 'http://localhost:8080')
+                ->identifiedBy('eco-client-cabinet-' . $user->id, false)
+                ->issuedAt($now)
+                ->expiresAt($now->modify('+24 hours'))
+                ->withClaim('uid', $user->id)
+                ->getToken($signer, $key);
+
+            return [
+                'token' => $token->toString(),
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'client_id' => $user->client_id,
+                ],
+            ];
+        } catch (BadRequestHttpException $e) {
+            throw $e;
+        } catch (UnauthorizedHttpException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Yii::error('Login error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            Yii::$app->response->statusCode = 500;
+            return [
+                'error' => 'Internal server error',
+                'message' => YII_DEBUG ? $e->getMessage() : 'An error occurred during login',
+            ];
         }
-
-        $user = User::findByEmail($email);
-        if (!$user || !$user->validatePassword($password)) {
-            throw new UnauthorizedHttpException('Invalid credentials');
-        }
-
-        /** @var Jwt $jwt */
-        $jwt = Yii::$app->jwt;
-        $signer = $jwt->getSigner('HS256');
-        $key = $jwt->getKey();
-        $now = new \DateTimeImmutable();
-
-        $token = $jwt->getBuilder()
-            ->issuedBy(getenv('BACKEND_URL') ?: 'http://localhost:8080')
-            ->permittedFor(getenv('BACKEND_URL') ?: 'http://localhost:8080')
-            ->identifiedBy('eco-client-cabinet-' . $user->id, false)
-            ->issuedAt($now)
-            ->expiresAt($now->modify('+24 hours'))
-            ->withClaim('uid', $user->id)
-            ->getToken($signer, $key);
-
-        return [
-            'token' => $token->toString(),
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'client_id' => $user->client_id,
-            ],
-        ];
     }
 
     /**

@@ -40,6 +40,11 @@ return [
                 ],
             ],
         ],
+        'jwt' => [
+            'class' => 'sizeg\jwt\Jwt',
+            'key' => getenv('JWT_SECRET') ?: 'supersecretkey',
+            'jwtValidationData' => 'common\components\JwtValidationData',
+        ],
         'urlManager' => [
             'enablePrettyUrl' => true,
             'enableStrictParsing' => false,
