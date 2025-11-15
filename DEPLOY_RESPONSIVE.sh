@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==========================================
-# ДЕПЛОЙ АДАПТИВНЫХ ИЗМЕНЕНИЙ
+# ДЕПЛОЙ АДАПТИВНЫХ ИЗМЕНЕНИЙ (БЕЗ DOCKER)
 # Выполните на сервере для применения изменений
 # ==========================================
 
@@ -23,7 +23,7 @@ echo ""
 cd "$PROJECT_DIR" || { echo -e "${RED}❌ Директория $PROJECT_DIR не найдена!${NC}"; exit 1; }
 
 # 1. Обновление из Git
-echo -e "${YELLOW}[1/4] Обновление из Git...${NC}"
+echo -e "${YELLOW}[1/5] Обновление из Git...${NC}"
 if [ -d ".git" ]; then
     git pull origin main || git pull
     echo -e "${GREEN}✓ Код обновлен${NC}"
@@ -33,66 +33,76 @@ else
 fi
 echo ""
 
-# 2. Проверка наличия Docker
-if command -v docker &> /dev/null && [ -f "docker-compose.yml" ] || [ -f "docker-compose.production.yml" ]; then
-    echo -e "${YELLOW}[2/4] Пересборка фронтенда в Docker...${NC}"
+# 2. Установка зависимостей фронтенда
+echo -e "${YELLOW}[2/5] Установка зависимостей фронтенда...${NC}"
+cd frontend || { echo -e "${RED}❌ Директория frontend не найдена!${NC}"; exit 1; }
+
+if [ ! -f "package.json" ]; then
+    echo -e "${RED}❌ package.json не найден!${NC}"
+    exit 1
+fi
+
+npm install --production=false
+echo -e "${GREEN}✓ Зависимости установлены${NC}"
+echo ""
+
+# 3. Сборка фронтенда
+echo -e "${YELLOW}[3/5] Сборка фронтенда...${NC}"
+npm run build
+echo -e "${GREEN}✓ Frontend собран${NC}"
+echo ""
+
+# 4. Перезапуск Next.js через systemd
+echo -e "${YELLOW}[4/5] Перезапуск Next.js...${NC}"
+cd "$PROJECT_DIR"
+
+# Ищем сервис Next.js
+SERVICE_NAME=""
+if systemctl list-units --type=service --all | grep -q "nextjs.service"; then
+    SERVICE_NAME="nextjs"
+elif systemctl list-units --type=service --all | grep -q "eco-frontend.service"; then
+    SERVICE_NAME="eco-frontend"
+fi
+
+if [ -n "$SERVICE_NAME" ]; then
+    echo "Найден сервис: $SERVICE_NAME"
+    systemctl restart "$SERVICE_NAME"
+    sleep 3
     
-    COMPOSE_FILE="docker-compose.yml"
-    if [ -f "docker-compose.production.yml" ]; then
-        COMPOSE_FILE="docker-compose.production.yml"
-    fi
-    
-    # Пересборка только фронтенда
-    docker-compose -f "$COMPOSE_FILE" build frontend
-    docker-compose -f "$COMPOSE_FILE" up -d frontend
-    
-    echo -e "${GREEN}✓ Frontend пересобран${NC}"
-    echo ""
-    
-    # 3. Ожидание запуска
-    echo -e "${YELLOW}[3/4] Ожидание запуска (30 сек)...${NC}"
-    sleep 30
-    echo ""
-    
-    # 4. Проверка
-    echo -e "${YELLOW}[4/4] Проверка статуса...${NC}"
-    if docker-compose -f "$COMPOSE_FILE" ps | grep -q "frontend.*Up"; then
-        echo -e "${GREEN}✓ Frontend запущен${NC}"
+    if systemctl is-active --quiet "$SERVICE_NAME"; then
+        echo -e "${GREEN}✓ Сервис $SERVICE_NAME перезапущен и работает${NC}"
     else
-        echo -e "${YELLOW}⚠ Frontend может быть еще запускается...${NC}"
+        echo -e "${YELLOW}⚠ Сервис перезапущен, но статус неясен${NC}"
+        echo "Проверьте: systemctl status $SERVICE_NAME"
     fi
-    
 else
-    # Без Docker - прямая сборка
-    echo -e "${YELLOW}[2/4] Установка зависимостей фронтенда...${NC}"
-    cd frontend || { echo -e "${RED}❌ Директория frontend не найдена!${NC}"; exit 1; }
+    # Если нет systemd сервиса, пробуем остановить процессы вручную
+    echo "Сервис systemd не найден, останавливаем процессы вручную..."
+    pkill -f "next start" 2>/dev/null || true
+    pkill -f "node.*next" 2>/dev/null || true
+    sleep 2
     
-    if [ -f "package.json" ]; then
-        npm install --production=false
-        echo -e "${GREEN}✓ Зависимости установлены${NC}"
-        echo ""
-        
-        echo -e "${YELLOW}[3/4] Сборка фронтенда...${NC}"
-        npm run build
-        echo -e "${GREEN}✓ Frontend собран${NC}"
-        echo ""
-        
-        echo -e "${YELLOW}[4/4] Перезапуск Next.js...${NC}"
-        # Проверяем systemd сервис
-        if systemctl list-units --type=service | grep -q "nextjs\|eco-frontend"; then
-            SERVICE_NAME=$(systemctl list-units --type=service | grep -E "nextjs|eco-frontend" | awk '{print $1}' | head -1)
-            systemctl restart "$SERVICE_NAME" 2>/dev/null || true
-            echo -e "${GREEN}✓ Сервис перезапущен${NC}"
-        else
-            # Если нет systemd, пробуем через pm2 или напрямую
-            pkill -f "next-server" 2>/dev/null || true
-            sleep 2
-            echo -e "${YELLOW}⚠ Запустите Next.js вручную: npm start${NC}"
-        fi
-    else
-        echo -e "${RED}❌ package.json не найден!${NC}"
-        exit 1
-    fi
+    # Пробуем запустить через npm start в фоне
+    cd frontend
+    export NODE_ENV=production
+    nohup npm start > /var/log/nextjs.log 2>&1 &
+    echo -e "${YELLOW}⚠ Next.js запущен вручную${NC}"
+    echo "Проверьте логи: tail -f /var/log/nextjs.log"
+fi
+echo ""
+
+# 5. Проверка статуса
+echo -e "${YELLOW}[5/5] Проверка статуса...${NC}"
+sleep 5
+
+# Проверяем порты
+if ss -tuln | grep -q ":3001 "; then
+    echo -e "${GREEN}✓ Next.js слушает порт 3001${NC}"
+elif ss -tuln | grep -q ":3000 "; then
+    echo -e "${GREEN}✓ Next.js слушает порт 3000${NC}"
+else
+    echo -e "${YELLOW}⚠ Next.js может быть еще запускается...${NC}"
+    echo "Проверьте порты: ss -tuln | grep ':300'"
 fi
 
 echo ""
@@ -106,5 +116,10 @@ echo "  или:       http://${IP}:3384"
 echo ""
 echo -e "${YELLOW}💡 Откройте сайт на мобильном устройстве${NC}"
 echo -e "${YELLOW}   или в DevTools (F12) -> Responsive Design Mode${NC}"
+echo ""
+echo -e "${BLUE}📋 Полезные команды:${NC}"
+echo "  systemctl status nextjs"
+echo "  journalctl -u nextjs -f"
+echo "  ss -tuln | grep ':300'"
 echo ""
 
