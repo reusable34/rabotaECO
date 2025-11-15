@@ -320,26 +320,32 @@ export default function AdminPage() {
     }
     
     try {
+      // Простая логика: если client_id есть и не пустой - преобразуем в число, иначе null
+      let clientIdValue = null;
+      if (userForm.client_id && userForm.client_id.toString().trim() !== '') {
+        const parsed = parseInt(userForm.client_id.toString(), 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          clientIdValue = parsed;
+        }
+      }
+
       const userData: any = {
-        name: userForm.name,
-        email: userForm.email,
+        name: userForm.name.trim(),
+        email: userForm.email.trim(),
         role: userForm.role,
-        client_id: userForm.client_id && userForm.client_id !== '' ? parseInt(userForm.client_id) : null,
+        client_id: clientIdValue,
       };
       
-      if (userForm.password) {
+      if (userForm.password && userForm.password.trim() !== '') {
         userData.password = userForm.password;
       }
       
       if (selectedUser) {
-        console.log('Обновление пользователя:', selectedUser.id, userData);
-        const response = await api.patch(`/user/${selectedUser.id}`, userData);
-        console.log('Ответ сервера:', response.data);
+        // Используем PUT вместо PATCH для надежности
+        const response = await api.put(`/user/${selectedUser.id}`, userData);
         alert('Пользователь успешно обновлен!');
       } else {
-        console.log('Создание пользователя:', userData);
         const response = await api.post('/user', userData);
-        console.log('Ответ сервера:', response.data);
         alert('Пользователь успешно создан!');
       }
       

@@ -92,14 +92,16 @@ class UserController extends ActiveController
         $model = new User();
         $data = Yii::$app->request->post();
         
-        $model->name = $data['name'] ?? '';
-        $model->email = $data['email'] ?? '';
+        $model->name = trim($data['name'] ?? '');
+        $model->email = trim($data['email'] ?? '');
         $model->role = $data['role'] ?? User::ROLE_CLIENT;
-        // Обрабатываем пустую строку, 0, null как отсутствие привязки
-        if (isset($data['client_id']) && $data['client_id'] !== '' && $data['client_id'] !== null && $data['client_id'] !== 0) {
-            $model->client_id = (int)$data['client_id'];
-        } else {
+        
+        // Простая логика для client_id
+        $clientId = $data['client_id'] ?? null;
+        if (empty($clientId) || $clientId === '0' || $clientId === 0 || $clientId === '') {
             $model->client_id = null;
+        } else {
+            $model->client_id = (int)$clientId;
         }
         
         $password = $data['password'] ?? '';
@@ -142,34 +144,36 @@ class UserController extends ActiveController
             throw new \yii\web\NotFoundHttpException('User not found');
         }
 
-        // Поддержка как POST, так и PATCH
-        $data = Yii::$app->request->post();
+        // Получаем данные из запроса
+        $data = Yii::$app->request->getBodyParams();
         if (empty($data)) {
-            $data = Yii::$app->request->getBodyParams();
+            $data = Yii::$app->request->post();
         }
         
-        // Логирование для отладки
-        Yii::info("UserController::actionUpdate - ID: {$id}, Data: " . json_encode($data), 'application');
-        
+        // Простая логика: обновляем только переданные поля
         if (isset($data['name'])) {
-            $model->name = $data['name'];
+            $model->name = trim($data['name']);
         }
         if (isset($data['email'])) {
-            $model->email = $data['email'];
+            $model->email = trim($data['email']);
         }
         if (isset($data['role'])) {
             $model->role = $data['role'];
         }
-        if (isset($data['client_id'])) {
-            // Обрабатываем пустую строку, 0, null как отсутствие привязки
-            if ($data['client_id'] === '' || $data['client_id'] === null || $data['client_id'] === 0) {
+        
+        // Обработка client_id - простая и понятная логика
+        if (array_key_exists('client_id', $data)) {
+            $clientId = $data['client_id'];
+            // Если пусто, null, 0, пустая строка или '0' - значит не привязан
+            if (empty($clientId) || $clientId === '0' || $clientId === 0 || $clientId === '') {
                 $model->client_id = null;
             } else {
-                $model->client_id = (int)$data['client_id'];
+                // Иначе преобразуем в число и сохраняем
+                $model->client_id = (int)$clientId;
             }
         }
         
-        if (isset($data['password']) && !empty($data['password'])) {
+        if (isset($data['password']) && !empty(trim($data['password']))) {
             $model->setPassword($data['password']);
         }
 
