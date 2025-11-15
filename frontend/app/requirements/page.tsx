@@ -183,9 +183,9 @@ export default function RequirementsPage() {
       // Важно: если значение не было изменено пользователем (пустая строка), используем значение из клиента
       const requestData: any = {
         category_id: categoryId || client.category_id,
-        has_well: hasWell === '' ? (client.has_well || false) : (hasWell === true || String(hasWell) === 'true' || hasWell === 1 || String(hasWell) === '1'),
-        has_river: hasRiver === '' ? (client.has_river || false) : (hasRiver === true || String(hasRiver) === 'true' || hasRiver === 1 || String(hasRiver) === '1'),
-        has_byproduct: hasByproduct === '' ? (client.has_byproduct || false) : (hasByproduct === true || String(hasByproduct) === 'true' || hasByproduct === 1 || String(hasByproduct) === '1'),
+        has_well: hasWell === '' ? (client.has_well || false) : Boolean(hasWell),
+        has_river: hasRiver === '' ? (client.has_river || false) : Boolean(hasRiver),
+        has_byproduct: hasByproduct === '' ? (client.has_byproduct || false) : Boolean(hasByproduct),
         responsible_person: responsiblePerson || client.responsible_person || '',
       };
       
