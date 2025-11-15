@@ -64,9 +64,6 @@ return [
                     'controller' => 'client',
                     'pluralize' => false,
                 ],
-                // Явные маршруты для requirement/{id}/risks ПЕРЕД UrlRule для приоритета
-                'GET requirement/<id:\d+>/risks' => 'requirement/risks',
-                'OPTIONS requirement/<id:\d+>/risks' => 'requirement/options',
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'requirement',
