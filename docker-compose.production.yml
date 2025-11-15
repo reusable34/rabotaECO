@@ -3,7 +3,6 @@ services:
     image: postgres:15-alpine
     container_name: eco_db
     privileged: true
-    network_mode: bridge
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-eco_admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eco_pass}
@@ -25,6 +24,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: eco_backend
+    privileged: true
     ports:
       - "8080:80"  # Backend на 8080 (не конфликтует с 80)
     volumes:
@@ -54,6 +54,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: eco_frontend
+    privileged: true
     ports:
       - "3001:3000"  # Frontend на 3001 (не конфликтует с 3381)
     volumes:
@@ -72,6 +73,7 @@ services:
   adminer:
     image: adminer:latest
     container_name: eco_adminer
+    privileged: true
     ports:
       - "8082:8080"  # Adminer на 8082 (не конфликтует)
     depends_on:
