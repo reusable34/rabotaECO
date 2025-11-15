@@ -79,12 +79,32 @@ cd /opt/eco-project/backend
 php -r "
 try {
     \$pdo = new PDO('pgsql:host=localhost;dbname=eco_client', 'eco_admin', 'eco_pass');
+    
+    // Проверка таблицы users
     \$stmt = \$pdo->query('SELECT COUNT(*) FROM information_schema.tables WHERE table_name = \'users\'');
     if (\$stmt->fetchColumn() > 0) {
         echo '✅ Таблица users существует\n';
     } else {
         echo '❌ Таблица users не найдена\n';
         exit(1);
+    }
+    
+    // Проверка всех пользователей
+    \$users = [
+        ['email' => 'admin@eco.local', 'name' => 'Администратор'],
+        ['email' => 'manager@eco.local', 'name' => 'Менеджер'],
+        ['email' => 'client@demo.local', 'name' => 'Клиент Демо'],
+    ];
+    
+    echo '\nПроверка пользователей:\n';
+    foreach (\$users as \$user) {
+        \$stmt = \$pdo->prepare('SELECT COUNT(*) FROM users WHERE email = ?');
+        \$stmt->execute([\$user['email']]);
+        if (\$stmt->fetchColumn() > 0) {
+            echo '  ✅ ' . \$user['name'] . ' (' . \$user['email'] . ')\n';
+        } else {
+            echo '  ❌ ' . \$user['name'] . ' (' . \$user['email'] . ') - НЕ НАЙДЕН\n';
+        }
     }
 } catch (PDOException \$e) {
     echo '❌ Ошибка: ' . \$e->getMessage() . '\n';
@@ -100,8 +120,17 @@ echo ""
 echo "Теперь попробуйте войти:"
 echo "  http://85.113.129.96:3384/login"
 echo ""
-echo "Демо-данные:"
-echo "  Email: client@demo.local"
-echo "  Password: client123"
+echo "Все пользователи для входа:"
+echo "  1. Администратор:"
+echo "     Email: admin@eco.local"
+echo "     Password: admin123"
+echo ""
+echo "  2. Менеджер:"
+echo "     Email: manager@eco.local"
+echo "     Password: manager123"
+echo ""
+echo "  3. Клиент (демо):"
+echo "     Email: client@demo.local"
+echo "     Password: client123"
 echo ""
 
