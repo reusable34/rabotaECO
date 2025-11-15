@@ -49,16 +49,15 @@ class RequirementGeneratorService
         // 3. Создаем требования в БД
         $createdRequirements = [];
         
-        // Логируем все требования перед созданием для III и IV категорий
-        if ($categoryId == 3 || $categoryId == 4) {
-            Yii::info("=== Category {$categoryId}: Requirements to create ===");
-            Yii::info("  Base requirements: " . count($baseRequirements));
-            Yii::info("  Additional requirements: " . (count($allRequirements) - count($baseRequirements)));
-            foreach ($allRequirements as $idx => $reqData) {
-                Yii::info("  [{$idx}] {$reqData['title']}");
-            }
-            Yii::info("=== Total: " . count($allRequirements) . " requirements ===");
+        // Логируем все требования перед созданием для ВСЕХ категорий
+        Yii::info("=== Category {$categoryId}: Requirements to create ===");
+        Yii::info("  Base requirements: " . count($baseRequirements));
+        Yii::info("  Additional requirements: " . (count($allRequirements) - count($baseRequirements)));
+        Yii::info("  Client params: has_well=" . ($client->has_well ? 'true' : 'false') . ", has_river=" . ($client->has_river ? 'true' : 'false') . ", has_byproduct=" . ($client->has_byproduct ? 'true' : 'false'));
+        foreach ($allRequirements as $idx => $reqData) {
+            Yii::info("  [{$idx}] {$reqData['title']}");
         }
+        Yii::info("=== Total: " . count($allRequirements) . " requirements ===");
         
         // Используем транзакцию для атомарности операции
         $transaction = Yii::$app->db->beginTransaction();
@@ -248,9 +247,17 @@ class RequirementGeneratorService
     private static function getAdditionalRequirements(Client $client): array
     {
         $requirements = [];
+        
+        // КРИТИЧЕСКИ ВАЖНО: Проверяем параметры клиента явно
+        // Используем строгую проверку на true, чтобы избежать проблем с типами данных
+        $hasWell = ($client->has_well === true || $client->has_well === 1 || $client->has_well === '1' || $client->has_well === 'true');
+        $hasRiver = ($client->has_river === true || $client->has_river === 1 || $client->has_river === '1' || $client->has_river === 'true');
+        $hasByproduct = ($client->has_byproduct === true || $client->has_byproduct === 1 || $client->has_byproduct === '1' || $client->has_byproduct === 'true');
+        
+        Yii::info("getAdditionalRequirements: has_well={$hasWell} (raw: " . var_export($client->has_well, true) . "), has_river={$hasRiver} (raw: " . var_export($client->has_river, true) . "), has_byproduct={$hasByproduct} (raw: " . var_export($client->has_byproduct, true) . ")");
 
         // Скважина
-        if ($client->has_well) {
+        if ($hasWell) {
             $requirements[] = [
                 'title' => 'Лицензия на право пользования недрами',
                 'basis' => 'Закон РФ "О недрах", КоАП РФ 7.3',
@@ -261,7 +268,7 @@ class RequirementGeneratorService
         }
 
         // Река (два требования)
-        if ($client->has_river) {
+        if ($hasRiver) {
             $requirements[] = [
                 'title' => 'Решение на право пользования водным объектом',
                 'basis' => 'Водный кодекс РФ, КоАП РФ 7.6',
@@ -279,7 +286,7 @@ class RequirementGeneratorService
         }
 
         // Побочный продукт
-        if ($client->has_byproduct) {
+        if ($hasByproduct) {
             $requirements[] = [
                 'title' => 'Технические условия "Удобрения органические на основе побочной продукции животноводства"',
                 'basis' => 'ГОСТ, технические регламенты',

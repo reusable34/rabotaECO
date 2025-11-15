@@ -315,27 +315,16 @@ class RequirementController extends ActiveController
         }
         
         // Явно устанавливаем булевы значения
-        // Если параметр передан - используем его значение, иначе устанавливаем false
+        // ВСЕГДА устанавливаем значения явно, даже если они не переданы
+        // Это критически важно для правильной генерации требований
         $hasWellParam = $request->post('has_well');
-        if ($hasWellParam !== null) {
-            $client->has_well = $hasWellParam === true || $hasWellParam === 'true' || $hasWellParam === 1 || $hasWellParam === '1';
-        } else {
-            $client->has_well = false; // Явно устанавливаем false, если не передано
-        }
+        $client->has_well = ($hasWellParam === true || $hasWellParam === 'true' || $hasWellParam === 1 || $hasWellParam === '1') ? true : false;
         
         $hasRiverParam = $request->post('has_river');
-        if ($hasRiverParam !== null) {
-            $client->has_river = $hasRiverParam === true || $hasRiverParam === 'true' || $hasRiverParam === 1 || $hasRiverParam === '1';
-        } else {
-            $client->has_river = false; // Явно устанавливаем false, если не передано
-        }
+        $client->has_river = ($hasRiverParam === true || $hasRiverParam === 'true' || $hasRiverParam === 1 || $hasRiverParam === '1') ? true : false;
         
         $hasByproductParam = $request->post('has_byproduct');
-        if ($hasByproductParam !== null) {
-            $client->has_byproduct = $hasByproductParam === true || $hasByproductParam === 'true' || $hasByproductParam === 1 || $hasByproductParam === '1';
-        } else {
-            $client->has_byproduct = false; // Явно устанавливаем false, если не передано
-        }
+        $client->has_byproduct = ($hasByproductParam === true || $hasByproductParam === 'true' || $hasByproductParam === 1 || $hasByproductParam === '1') ? true : false;
         
         if ($responsiblePerson !== null) {
             $client->responsible_person = $responsiblePerson;
