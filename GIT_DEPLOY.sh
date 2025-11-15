@@ -112,33 +112,12 @@ if [ -f "docker-compose.production.yml" ]; then
     echo "Использую production конфигурацию"
 fi
 
-# 9. Настройка для LXC контейнера
+# 9. Настройка Docker для LXC (минимальная)
 echo -e "${YELLOW}Проверка окружения...${NC}"
-# Если в LXC контейнере, настраиваем Docker
-if [ -f /.dockerenv ] || grep -q "container=lxc" /proc/1/environ 2>/dev/null || [ -d /sys/fs/cgroup/systemd ]; then
-    echo "Обнаружен LXC контейнер, настраиваю Docker..."
-    # Настраиваем Docker для работы в LXC без sysctl
-    mkdir -p /etc/docker
-    cat > /etc/docker/daemon.json << 'DOCKER_EOF'
-{
-  "storage-driver": "overlay2",
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
-  },
-  "default-ulimits": {
-    "nofile": {
-      "Name": "nofile",
-      "Hard": 64000,
-      "Soft": 64000
-    }
-  }
-}
-DOCKER_EOF
-    systemctl restart docker 2>/dev/null || service docker restart 2>/dev/null || true
-    sleep 5
-    echo "Docker перезапущен для LXC"
+# Если в LXC контейнере, просто настраиваем базовые параметры
+if grep -q "container=lxc" /proc/1/environ 2>/dev/null || [ -d /sys/fs/cgroup/systemd ]; then
+    echo "Обнаружен LXC контейнер"
+    # Не трогаем sysctl, просто используем обычную конфигурацию
 fi
 
 # 10. Запуск
